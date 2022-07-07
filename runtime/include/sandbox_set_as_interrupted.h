@@ -23,8 +23,8 @@ sandbox_set_as_interrupted(struct sandbox *sandbox, sandbox_state_t last_state)
 
 	/* State Change Bookkeeping */
 	assert(now > sandbox->timestamp_of.last_state_change);
-	sandbox->last_duration_of_exec = now - sandbox->timestamp_of.last_state_change;
-	sandbox->duration_of_state[last_state] += sandbox->last_duration_of_exec;
+	sandbox->last_state_duration = now - sandbox->timestamp_of.last_state_change;
+	sandbox->duration_of_state[last_state] += sandbox->last_state_duration;
 	sandbox->timestamp_of.last_state_change = now;
 	/* We do not append SANDBOX_INTERRUPTED to the sandbox_state_history because it would quickly fill the buffer */
 	sandbox_state_totals_increment(SANDBOX_INTERRUPTED);
@@ -36,9 +36,7 @@ sandbox_interrupt(struct sandbox *sandbox)
 {
 	sandbox_set_as_interrupted(sandbox, sandbox->state);
 
-	if (module_is_paid(sandbox->module)) {
-		atomic_fetch_sub(&sandbox->module->remaining_budget, sandbox->last_duration_of_exec);
-	}
+	// sandbox_process_scheduler_updates(sandbox);
 }
 
 
@@ -61,6 +59,10 @@ sandbox_interrupt_return(struct sandbox *sandbox, sandbox_state_t interrupted_st
 	/* We do not append SANDBOX_INTERRUPTED to the sandbox_state_history because it would quickly fill the buffer */
 	sandbox_state_totals_increment(interrupted_state);
 	sandbox_state_totals_decrement(SANDBOX_INTERRUPTED);
+
+	if (sandbox->absolute_deadline < now) {
+		// printf("Interrupted Sandbox missed deadline already!\n");
+	}
 
 	barrier();
 	/* WARNING: Code after this assignment may be preemptable */

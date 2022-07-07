@@ -30,7 +30,11 @@ thread_local int worker_thread_epoll_file_descriptor;
 thread_local int worker_thread_idx;
 
 /* Used to track tenants' timeouts */
-__thread struct priority_queue *worker_thread_timeout_queue;
+thread_local struct priority_queue *worker_thread_timeout_queue;
+
+/* Used to track worker's dbf */
+thread_local struct dbf *worker_dbf;
+thread_local struct sandbox_metadata *sandbox_meta;
 
 
 /***********************
@@ -60,6 +64,23 @@ worker_thread_main(void *argument)
 	/* Initialize Completion Queue */
 	local_completion_queue_initialize();
 
+	/* To make sure global dbf reads out the max deadline in the system */
+	sleep(1);
+
+	if (scheduler == SCHEDULER_MTDS) {
+		worker_thread_timeout_queue = priority_queue_initialize(RUNTIME_RUNQUEUE_SIZE, false,
+		                                                        module_timeout_get_priority, NULL,
+		                                                        NULL); ///// TODO: Change NULL!
+	} else if (scheduler == SCHEDULER_MTDBF) {
+		/* Initialize worker's dbf data structure */
+		worker_dbf = dbf_initialize(1, 100, worker_thread_idx);
+		worker_dbf = dbf_grow(worker_dbf, global_dbf->max_relative_deadline);
+		// printf("WORKER ");
+		// dbf_print(worker_dbf);
+		sandbox_meta         = malloc(sizeof(struct sandbox_metadata));
+		sandbox_meta->module = NULL;
+	}
+
 	/* Initialize epoll */
 	worker_thread_epoll_file_descriptor = epoll_create1(0);
 	if (unlikely(worker_thread_epoll_file_descriptor < 0)) panic_err();
@@ -71,11 +92,6 @@ worker_thread_main(void *argument)
 	if (runtime_preemption_enabled) {
 		software_interrupt_unmask_signal(SIGALRM);
 		software_interrupt_unmask_signal(SIGUSR1);
-	}
-
-	if (scheduler == SCHEDULER_MTDS) {
-		worker_thread_timeout_queue = priority_queue_initialize(RUNTIME_RUNQUEUE_SIZE, false,
-		                                                        module_timeout_get_priority);
 	}
 
 	scheduler_idle_loop();

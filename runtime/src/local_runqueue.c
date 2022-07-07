@@ -7,6 +7,7 @@
 #include "local_runqueue.h"
 
 static struct local_runqueue_config local_runqueue;
+thread_local static struct sandbox_metadata local_highest_priority_metadata;
 
 #ifdef LOG_LOCAL_RUNQUEUE
 thread_local uint32_t local_runqueue_count = 0;
@@ -68,3 +69,27 @@ local_runqueue_get_next()
 	assert(local_runqueue.get_next_fn != NULL);
 	return local_runqueue.get_next_fn();
 };
+
+struct sandbox_metadata
+local_runqueue_peek_metadata()
+{
+	return local_highest_priority_metadata;
+}
+
+
+void
+local_runqueue_update_highest_priority(const void *element)
+{
+	if (element == NULL) {
+		local_highest_priority_metadata.absolute_deadline = UINT64_MAX;
+		local_highest_priority_metadata.arrival_timestamp = 0;
+		local_highest_priority_metadata.remaining_execution = 0;
+		return;
+	}
+
+	const struct sandbox *sandbox = element;
+
+	local_highest_priority_metadata.arrival_timestamp   = sandbox->timestamp_of.request_arrival;
+	local_highest_priority_metadata.absolute_deadline   = sandbox->absolute_deadline;
+	local_highest_priority_metadata.remaining_execution = sandbox->remaining_execution;
+}

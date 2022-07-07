@@ -17,7 +17,7 @@ CFLAGS+=-D_GNU_SOURCE
 CFLAGS+=-O3 -flto
 
 # Debugging Flags
-# CFLAGS+=-O0 -g
+# CFLAGS+=-O0 -g3
 
 # CFI Sanitizer
 # CFLAGS+=-fvisibility=default -fsanitize=cfi
@@ -39,6 +39,7 @@ BINARY_NAME=sledgert
 
 # Feature Toggles
 # CFLAGS += -DADMISSIONS_CONTROL
+# CFLAGS += -DTRAFFIC_CONTROL
 
 # Debugging Flags
 
@@ -57,6 +58,7 @@ BINARY_NAME=sledgert
 
 # Various Informational Logs for Debugging
 # CFLAGS += -DLOG_ADMISSIONS_CONTROL
+# CFLAGS += -DLOG_TRAFFIC_CONTROL
 # CFLAGS += -DLOG_CONTEXT_SWITCHES
 # CFLAGS += -DLOG_HTTP_PARSER
 # CFLAGS += -DLOG_LOCK_OVERHEAD
@@ -131,7 +133,7 @@ clean: thirdparty.clean runtime.clean
 bin/sledgert: ${HEADER_DEPS} ${CFILES}
 	@echo "Compiling runtime"
 	@mkdir -p bin/
-	${CC} ${INCLUDES} ${CFLAGS} ${LDFLAGS} ${JSMNCFLAGS} -L/usr/lib/ ${CFILES} -o bin/sledgert
+	@${CC} ${INCLUDES} ${CFLAGS} ${LDFLAGS} ${JSMNCFLAGS} -L/usr/lib/ ${CFILES} -o bin/sledgert
 
 .PHONY: runtime
 runtime: bin/sledgert

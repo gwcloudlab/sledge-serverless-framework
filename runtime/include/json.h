@@ -14,7 +14,7 @@
 #include "module.h"
 #include "module_config.h"
 
-#define JSON_TOKENS_CAPACITY 16384
+#define JSON_TOKENS_CAPACITY 16 * 1024
 
 enum
 {
@@ -24,6 +24,7 @@ enum
 	module_expected_execution_us,
 	module_replenishment_period_us,
 	module_max_budget_us,
+	module_reservation_percentile,
 	module_admissions_percentile,
 	module_relative_deadline_us,
 	module_http_req_size,
@@ -38,6 +39,7 @@ static const char *module_keys[module_keys_len] = { "name",
 	                                            "expected-execution-us",
 	                                            "replenishment-period-us",
 	                                            "max-budget-us",
+	                                            "reservation-percentile",
 	                                            "admissions-percentile",
 	                                            "relative-deadline-us",
 	                                            "http-req-size",
@@ -270,6 +272,12 @@ parse_json(const char *json_buf, ssize_t json_buf_size, struct module_config **m
 
 				int rc = parse_uint32_t(tokens[i], json_buf, module_keys[module_max_budget_us],
 				                        &(*module_config_vec)[module_idx].max_budget_us);
+				if (rc < 0) goto json_parse_err;
+			} else if (strcmp(key, module_keys[module_reservation_percentile]) == 0) {
+				if (!has_valid_type(tokens[i], key, JSMN_PRIMITIVE)) goto json_parse_err;
+
+				int rc = parse_uint8_t(tokens[i], json_buf, module_keys[module_reservation_percentile],
+				                       &(*module_config_vec)[module_idx].reservation_percentile);
 				if (rc < 0) goto json_parse_err;
 			} else if (strcmp(key, module_keys[module_admissions_percentile]) == 0) {
 				if (!has_valid_type(tokens[i], key, JSMN_PRIMITIVE)) goto json_parse_err;

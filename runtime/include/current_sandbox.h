@@ -9,6 +9,10 @@
 extern thread_local struct sandbox *worker_thread_current_sandbox;
 
 void current_sandbox_start(void);
+void current_sandbox_exit(void);
+int  sandbox_validate_self_deadline(struct sandbox *);
+int  sandbox_validate_self_lifetime(struct sandbox *);
+void sandbox_kill_self(struct sandbox *);
 
 /**
  * Getter for the current sandbox executing on this thread

@@ -18,6 +18,20 @@
  * Private Static Inline *
  ************************/
 
+static inline uint64_t
+global_sandbox_get_opposite_priority(void *element)
+{
+	struct sandbox *sandbox = (struct sandbox *)element;
+	return -1 * sandbox->absolute_deadline;
+};
+
+static inline uint64_t
+local_sandbox_meta_get_opposite_priority(void *element)
+{
+	struct sandbox_metadata *sandbox_meta = (struct sandbox_metadata *)element;
+	return -1 * sandbox_meta->absolute_deadline;
+};
+
 static inline int
 module_policy_specific_init(struct module *module, struct module_config *config)
 {
@@ -44,7 +58,8 @@ module_policy_specific_init(struct module *module, struct module_config *config)
 
 		for (int i = 0; i < runtime_worker_threads_count; i++) {
 			module->pwm_sandboxes[i].sandboxes = priority_queue_initialize(RUNTIME_MODULE_QUEUE_SIZE, false,
-			                                                               sandbox_get_priority);
+			                                                               sandbox_get_priority, NULL,
+			                                                               NULL); /////// TODO: Change NULL!
 			module->pwm_sandboxes[i].module    = module;
 			module->pwm_sandboxes[i].mt_class  = (module->replenishment_period == 0) ? MT_DEFAULT
 			                                                                         : MT_GUARANTEED;
@@ -55,11 +70,43 @@ module_policy_specific_init(struct module *module, struct module_config *config)
 		/* Initialize the module's global request queue */
 		module->mgrq_requests                   = malloc(sizeof(struct module_global_request_queue));
 		module->mgrq_requests->sandbox_requests = priority_queue_initialize(RUNTIME_MODULE_QUEUE_SIZE, false,
-		                                                                    sandbox_get_priority_fn);
+		                                                                    sandbox_get_priority, NULL,
+		                                                                    NULL); /////// TODO: Change NULL!
 		module->mgrq_requests->module           = module;
 		module->mgrq_requests->mt_class = (module->replenishment_period == 0) ? MT_DEFAULT : MT_GUARANTEED;
 		module->mgrq_requests->module_timeout.module = module;
 		module->mgrq_requests->module_timeout.pwm    = NULL;
+		break;
+
+	case SCHEDULER_MTDBF:
+		module->reservation_percentile = config->reservation_percentile;
+		module->module_dbf = dbf_initialize(runtime_worker_threads_count, config->reservation_percentile, -2);
+
+		// printf("MODULE %s - INIT ", module->name);
+		// dbf_print(module->module_dbf);
+
+		if (module->relative_deadline > module->module_dbf->max_relative_deadline) {
+			module->module_dbf = dbf_grow(module->module_dbf, module->relative_deadline);
+			// printf("MODULE %s - GROW ", module->name);
+			// dbf_print(module->module_dbf);
+
+			if (module->relative_deadline > global_dbf->max_relative_deadline) {
+				global_dbf = dbf_grow(global_dbf, module->relative_deadline);
+
+				// printf("GLOBAL GROW ");
+				// dbf_print(global_dbf);
+			}
+		}
+
+		////////////////// TODO: batter name!!!
+		module->global_sandboxes = priority_queue_initialize(4096, false, // TODO fix size!
+		                                                     global_sandbox_get_opposite_priority, NULL,
+		                                                     global_sandbox_update_pq_idx_in_module_queue);
+
+		module->local_sandbox_metas =
+		  priority_queue_initialize(4096, false, // TODO fix size!
+		                            local_sandbox_meta_get_opposite_priority, NULL,
+		                            local_sandbox_meta_update_pq_idx_in_module_queue);
 		break;
 	}
 
@@ -118,7 +165,7 @@ module_init(struct module *module, struct module_config *config)
 		      ADMISSIONS_CONTROL_GRANULARITY);
 #else
 	/* relative-deadline-us is required if scheduler is EDF */
-	if (scheduler == SCHEDULER_EDF && config->relative_deadline_us == 0)
+	if (scheduler != SCHEDULER_FIFO && config->relative_deadline_us == 0)
 		panic("relative_deadline_us is required\n");
 #endif
 
@@ -148,6 +195,7 @@ module_init(struct module *module, struct module_config *config)
 	uint64_t expected_execution = (uint64_t)config->expected_execution_us * runtime_processor_speed_MHz;
 	admissions_info_initialize(&module->admissions_info, config->admissions_percentile, expected_execution,
 	                           module->relative_deadline);
+	estimated_exec_info_initialize(&module->estimated_exec_info, config->admissions_percentile, expected_execution);
 
 	if (module_policy_specific_init(module, config)) goto err;
 
@@ -259,6 +307,9 @@ module_free(struct module *module)
 		free(module->pwm_sandboxes);
 		priority_queue_free(module->mgrq_requests->sandbox_requests);
 		free(module->mgrq_requests);
+	} else if (scheduler == SCHEDULER_MTDBF) {
+		priority_queue_free(module->global_sandboxes);
+		free(module->module_dbf);
 	}
 	close(module->socket_descriptor);
 	sledge_abi_symbols_deinit(&module->abi);

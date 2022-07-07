@@ -167,9 +167,11 @@ local_runqueue_mtds_initialize()
 {
 	/* Initialize local state */
 	local_runqueue_mtds_guaranteed = priority_queue_initialize(RUNTIME_RUNQUEUE_SIZE, false,
-	                                                           perworker_module_get_priority);
+	                                                           perworker_module_get_priority, NULL,
+	                                                           NULL); /////// TODO: Change NULL!
 	local_runqueue_mtds_default    = priority_queue_initialize(RUNTIME_RUNQUEUE_SIZE, false,
-	                                                           perworker_module_get_priority);
+	                                                           perworker_module_get_priority, NULL,
+	                                                           NULL); /////// TODO: Change NULL!
 
 	/* Register Function Pointers for Abstract Scheduling API */
 	struct local_runqueue_config config = { .add_fn      = local_runqueue_mtds_add,

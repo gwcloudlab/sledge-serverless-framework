@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#shellcheck disable=SC1091
+
 # This experiment is intended to document how the level of concurrent requests influence the latency, throughput, and success rate
 # Success - The percentage of requests that complete by their deadlines
 # Throughput - The mean number of successful requests per second

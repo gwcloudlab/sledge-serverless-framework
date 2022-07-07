@@ -8,6 +8,7 @@
 #include "panic.h"
 #include "sandbox_state_history.h"
 #include "sandbox_types.h"
+#include "worker_thread_epoll.h"
 
 /**
  * Transitions a sandbox to the SANDBOX_RUNNABLE state.
@@ -29,7 +30,9 @@ sandbox_set_as_runnable(struct sandbox *sandbox, sandbox_state_t last_state)
 
 	switch (last_state) {
 	case SANDBOX_INITIALIZED: {
-		local_runqueue_add(sandbox);
+		// local_runqueue_add(sandbox);
+		// sandbox->timestamp_of.worker_allocation = now; // TODO: remove later if added to
+		// global_remove_if_earlier sandbox->owned_worker_idx               = worker_thread_idx;
 		break;
 	}
 	case SANDBOX_ASLEEP: {
@@ -56,5 +59,19 @@ static inline void
 sandbox_wakeup(struct sandbox *sandbox)
 {
 	assert(sandbox->state == SANDBOX_ASLEEP);
+
+	/* Kill a sandbox that woke up that was previously ordered to be killed by the listener */
+	if (sandbox->response_code == 4091) {
+		// debuglog("Woke up dead sandbox #%lu\n", sandbox->id);
+		sandbox_kill_self(sandbox);
+		return;
+	}
+
+	/* Kill a sandbox that wakes up with its deadline already missed. */
+	if (sandbox_validate_self_deadline(sandbox) != 0) {
+		// debuglog("Woke up sandbox #%lu with a missed deadline", sandbox->id);
+		return;
+	}
+
 	sandbox_set_as_runnable(sandbox, SANDBOX_ASLEEP);
 }

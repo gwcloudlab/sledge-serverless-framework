@@ -5,7 +5,7 @@
 #include <sys/types.h>
 #include <netdb.h>
 
-#include "admissions_control.h"
+#include "estimated_exec_info.h"
 #include "admissions_info.h"
 #include "current_wasm_module_instance.h"
 #include "http.h"
@@ -18,6 +18,7 @@
 #include "wasm_stack.h"
 #include "wasm_memory.h"
 #include "wasm_table.h"
+#include "dbf.h"
 
 #define MODULE_DEFAULT_REQUEST_RESPONSE_SIZE (PAGE_SIZE)
 
@@ -64,7 +65,7 @@ struct perworker_module_sandbox_queue {
 	struct module           *module; // to be able to find the RB/MB/RP/RT.
 	struct module_timeout    module_timeout;
 	enum MULTI_TENANCY_CLASS mt_class; // check whether the corresponding PWM has been demoted
-} __attribute__((aligned(128)));
+} __attribute__((aligned(CACHE_PAD)));
 
 struct module_global_request_queue {
 	struct priority_queue                    *sandbox_requests;
@@ -80,21 +81,26 @@ struct module_pools {
 
 struct module {
 	/* Metadata from JSON Config */
-	char                   name[MODULE_MAX_NAME_LENGTH];
-	char                   path[MODULE_MAX_PATH_LENGTH];
-	uint32_t               stack_size; /* a specification? */
-	uint32_t               relative_deadline_us;
-	uint16_t               port;
-	struct admissions_info admissions_info;
-	uint64_t               relative_deadline; /* cycles */
+	char                       name[MODULE_MAX_NAME_LENGTH];
+	char                       path[MODULE_MAX_PATH_LENGTH];
+	uint32_t                   stack_size; /* a specification? */
+	uint32_t                   relative_deadline_us;
+	uint16_t                   port;
+	struct admissions_info     admissions_info;
+	struct estimated_exec_info estimated_exec_info;
+	uint64_t                   relative_deadline; /* cycles */
 
 	/* Deferrable Server Attributes */
-	uint64_t                 replenishment_period; /* cycles, not changing after init */
-	uint64_t                 max_budget;           /* cycles, not changing after init */
-	_Atomic volatile int64_t remaining_budget;     /* cycles left till next replenishment, can be negative */
+	uint64_t                 replenishment_period;   /* cycles, not changing after init */
+	uint64_t                 max_budget;             /* cycles, not changing after init */
+	_Atomic volatile int64_t remaining_budget;       /* cycles left till next replenishment, can be negative */
+	uint8_t                  reservation_percentile; /* percentile of the overall reservation utilisation */
 
 	struct perworker_module_sandbox_queue *pwm_sandboxes;
 	struct module_global_request_queue    *mgrq_requests;
+	struct dbf                            *module_dbf;
+	struct priority_queue                 *global_sandboxes;
+	struct priority_queue                 *local_sandbox_metas;
 
 	/* HTTP State */
 	size_t             max_request_size;

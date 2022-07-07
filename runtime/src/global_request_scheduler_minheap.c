@@ -67,7 +67,8 @@ global_request_scheduler_minheap_peek(void)
 void
 global_request_scheduler_minheap_initialize()
 {
-	global_request_scheduler_minheap = priority_queue_initialize(4096, true, sandbox_get_priority_fn);
+	global_request_scheduler_minheap = priority_queue_initialize(4096, true, sandbox_get_priority,NULL,
+	                                                             sandbox_update_pq_idx_in_runqueue);
 
 	struct global_request_scheduler_config config = {
 		.add_fn               = global_request_scheduler_minheap_add,

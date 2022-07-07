@@ -1,6 +1,8 @@
 digraph {
-	Uninitialized -> Initialized
-	Initialized -> {Runnable Error}
+	Uninitialized -> Allocated
+	Allocated -> {Initialized Error}
+	Initialized -> Runnable
+	Initialized -> Error [label="kill"]
 	Runnable -> Running_Sys
 
 	Running_User -> Interrupted [label="interrupt"]

@@ -112,7 +112,16 @@
 		"sledge_abi.h": "c",
 		"vec.h": "c",
 		"module_database.h": "c",
-		"perf_window_t.h": "c"
+		"perf_window_t.h": "c",
+		"system_error": "c",
+		"memory": "c",
+		"new": "c",
+		"sandbox_perf_log.h": "c",
+		"admissions_info.h": "c",
+		"admissions_control_dbf.h": "c",
+		"worker_thread_epoll.h": "c",
+		"thread": "c",
+		"local_runqueue_mtdbf.h": "c"
 	},
 	"files.exclude": {
 		"**/.git": true,

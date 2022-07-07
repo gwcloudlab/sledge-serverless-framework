@@ -219,12 +219,15 @@ void
 global_request_scheduler_mtds_initialize()
 {
 	global_request_scheduler_mtds_guaranteed = priority_queue_initialize(RUNTIME_RUNQUEUE_SIZE, false,
-	                                                                     module_request_queue_get_priority);
+	                                                                     module_request_queue_get_priority,NULL,
+	                                                                     NULL); ///////// TODO: CHANGE NULL !
 	global_request_scheduler_mtds_default    = priority_queue_initialize(RUNTIME_RUNQUEUE_SIZE, false,
-	                                                                     module_request_queue_get_priority);
+	                                                                     module_request_queue_get_priority,NULL,
+	                                                                     NULL); /////// TODO: Change NULL!
 
 	global_module_timeout_queue = priority_queue_initialize(RUNTIME_RUNQUEUE_SIZE, false,
-	                                                        module_timeout_get_priority);
+	                                                        module_timeout_get_priority,NULL,
+	                                                        NULL); /////// TODO: Change NULL!
 
 	LOCK_INIT(&global_lock);
 

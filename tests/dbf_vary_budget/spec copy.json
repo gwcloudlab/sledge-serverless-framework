@@ -1,0 +1,58 @@
+[
+  {
+    "name": "fib30",
+    "path": "fibonacci.wasm.so",
+    "port": 10030,
+    "expected-execution-us": 6500,
+    "relative-deadline-us": 10000,
+    "admissions-percentile": 70,
+    "replenishment-period-us": 0,
+    "max-budget-us": 0,
+    "reservation-percentile": 0,
+    "http-req-size": 1024,
+    "http-resp-size": 1024,
+    "http-resp-content-type": "text/plain"
+  },
+  {
+    "name": "fib40",
+    "path": "fibonacci.wasm.so",
+    "port": 10040,
+    "expected-execution-us": 10000000,
+    "relative-deadline-us": 20000000,
+    "admissions-percentile": 70,
+    "replenishment-period-us": 0,
+    "max-budget-us": 0,
+    "reservation-percentile": 0,
+    "http-req-size": 1024,
+    "http-resp-size": 1024,
+    "http-resp-content-type": "text/plain"
+  },
+  {
+    "name": "fib30_050p",
+    "path": "fibonacci.wasm.so",
+    "port": 20050,
+    "expected-execution-us": 6500,
+    "relative-deadline-us": 10000,
+    "admissions-percentile": 70,
+    "replenishment-period-us": 0,
+    "max-budget-us": 0,
+    "reservation-percentile": 50,
+    "http-req-size": 1024,
+    "http-resp-size": 1024,
+    "http-resp-content-type": "text/plain"
+  },
+  {
+    "name": "fib30_100p",
+    "path": "fibonacci.wasm.so",
+    "port": 20100,
+    "expected-execution-us": 6500,
+    "relative-deadline-us": 10000,
+    "admissions-percentile": 70,
+    "replenishment-period-us": 0,
+    "max-budget-us": 0,
+    "reservation-percentile": 100,
+    "http-req-size": 1024,
+    "http-resp-size": 1024,
+    "http-resp-content-type": "text/plain"
+  }
+]

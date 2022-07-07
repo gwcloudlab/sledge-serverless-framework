@@ -354,6 +354,7 @@ __framework_sh__run_debug() {
 			--eval-command="handle SIGUSR1 noprint nostop" \
 			--eval-command="handle SIGPIPE noprint nostop" \
 			--eval-command="set pagination off" \
+			--eval-command="set print pretty" \
 			--eval-command="set substitute-path /sledge/runtime $project_directory" \
 			--eval-command="run $__framework_sh__application_directory/spec.json" \
 			sledgert
@@ -362,6 +363,7 @@ __framework_sh__run_debug() {
 			--eval-command="handle SIGUSR1 noprint nostop" \
 			--eval-command="handle SIGPIPE noprint nostop" \
 			--eval-command="set pagination off" \
+			--eval-command="set print pretty" \
 			--eval-command="run $__framework_sh__application_directory/spec.json" \
 			sledgert
 	fi

@@ -15,7 +15,22 @@ sandbox_perf_log_print_header()
 	if (sandbox_perf_log == NULL) { perror("sandbox perf log"); }
 	fprintf(sandbox_perf_log, "id,module,port,state,deadline,actual,queued,uninitialized,allocated,initialized,"
 	                          "runnable,interrupted,preempted,"
-	                          "running_sys,running_user,asleep,returned,complete,error,proc_MHz,memory\n");
+	                          "running_sys,running_user,asleep,returned,complete,error,proc_MHz,response_code\n");
+}
+
+/**
+ * Prints key performance metrics for a denied request (by AC) to perf_log
+ * This is defined by an environment variable
+ * @param module
+ */
+static inline void
+sandbox_perf_log_print_denied_entry(struct module *module, uint16_t response_code)
+{
+	/* If the log was not defined by an environment variable, early out */
+	if (sandbox_perf_log == NULL) return;
+
+	fprintf(sandbox_perf_log, "-1,%s,%u,Deny,%lu,0,0,0,0,0,0,0,0,0,0,0,0,0,0,%u,%u\n", module->name, module->port,
+	        module->relative_deadline, runtime_processor_speed_MHz, response_code);
 }
 
 /**
@@ -28,15 +43,17 @@ sandbox_perf_log_print_entry(struct sandbox *sandbox)
 {
 	/* If the log was not defined by an environment variable, early out */
 	if (sandbox_perf_log == NULL) return;
+	// if (sandbox->state == SANDBOX_ERROR) return; ////////////////// TODO temporary solution, to be repplaced
+	// later by actual ERROR types
 
-	uint64_t queued_duration = sandbox->timestamp_of.allocation - sandbox->timestamp_of.request_arrival;
+	uint64_t queued_duration = sandbox->timestamp_of.worker_allocation - sandbox->timestamp_of.request_arrival;
 
 	/*
 	 * Assumption: A sandbox is never able to free pages. If linear memory management
 	 * becomes more intelligent, then peak linear memory size needs to be tracked
 	 * seperately from current linear memory size.
 	 */
-	fprintf(sandbox_perf_log, "%lu,%s,%d,%s,%lu,%lu,%lu,,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%u\n",
+	fprintf(sandbox_perf_log, "%lu,%s,%u,%s,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%u,%u\n",
 	        sandbox->id, sandbox->module->name, sandbox->module->port, sandbox_state_stringify(sandbox->state),
 	        sandbox->module->relative_deadline, sandbox->total_time, queued_duration,
 	        sandbox->duration_of_state[SANDBOX_UNINITIALIZED], sandbox->duration_of_state[SANDBOX_ALLOCATED],
@@ -45,7 +62,7 @@ sandbox_perf_log_print_entry(struct sandbox *sandbox)
 	        sandbox->duration_of_state[SANDBOX_RUNNING_SYS], sandbox->duration_of_state[SANDBOX_RUNNING_USER],
 	        sandbox->duration_of_state[SANDBOX_ASLEEP], sandbox->duration_of_state[SANDBOX_RETURNED],
 	        sandbox->duration_of_state[SANDBOX_COMPLETE], sandbox->duration_of_state[SANDBOX_ERROR],
-	        runtime_processor_speed_MHz);
+	        runtime_processor_speed_MHz, sandbox->response_code);
 }
 
 static inline void

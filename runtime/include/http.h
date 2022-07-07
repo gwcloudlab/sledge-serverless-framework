@@ -29,6 +29,18 @@
 	"Connection: close\r\n"        \
 	"\r\n"
 
+#define HTTP_RESPONSE_408_REQUEST_TIMEOUT  \
+	"HTTP/1.1 408 Request Timeout\r\n" \
+	"Server: SLEdge\r\n"               \
+	"Connection: close\r\n"            \
+	"\r\n"
+
+#define HTTP_RESPONSE_409_CONFLICT  \
+	"HTTP/1.1 409 Conflict\r\n" \
+	"Server: SLEdge\r\n"        \
+	"Connection: close\r\n"     \
+	"\r\n"
+
 #define HTTP_RESPONSE_413_PAYLOAD_TOO_LARGE  \
 	"HTTP/1.1 413 Payload Too Large\r\n" \
 	"Server: SLEdge\r\n"                 \
@@ -69,6 +81,14 @@ http_header_build(int status_code)
 		response = HTTP_RESPONSE_400_BAD_REQUEST;
 		http_total_increment_4XX();
 		break;
+	case 408:
+		response = HTTP_RESPONSE_408_REQUEST_TIMEOUT;
+		http_total_increment_4XX();
+		break;
+	case 409:
+		response = HTTP_RESPONSE_409_CONFLICT;
+		http_total_increment_4XX();
+		break;
 	case 413:
 		response = HTTP_RESPONSE_413_PAYLOAD_TOO_LARGE;
 		http_total_increment_4XX();
@@ -98,6 +118,10 @@ http_header_len(int status_code)
 	switch (status_code) {
 	case 400:
 		return strlen(HTTP_RESPONSE_400_BAD_REQUEST);
+	case 408:
+		return strlen(HTTP_RESPONSE_408_REQUEST_TIMEOUT);
+	case 409:
+		return strlen(HTTP_RESPONSE_409_CONFLICT);
 	case 413:
 		return strlen(HTTP_RESPONSE_413_PAYLOAD_TOO_LARGE);
 	case 429:

@@ -1,0 +1,14 @@
+{
+	"name": "",
+	"path": "fibonacci.wasm.so",
+	"port": 0,
+	"expected-execution-us": 0,
+	"relative-deadline-us": 0,
+	"admissions-percentile": 70,
+	"replenishment-period-us": 0,
+	"max-budget-us": 0,
+	"reservation-percentile": 0,
+	"http-req-size": 1024,
+	"http-resp-size": 1024,
+	"http-resp-content-type": "text/plain"
+}

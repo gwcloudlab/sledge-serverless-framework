@@ -27,6 +27,7 @@
 #include "scheduler.h"
 #include "software_interrupt.h"
 #include "worker_thread.h"
+#include "priority_queue.h" /////////// temp
 
 /* Conditionally used by debuglog when NDEBUG is not set */
 int32_t  debuglog_file_descriptor        = -1;
@@ -40,9 +41,12 @@ int                          runtime_worker_core_count;
 
 
 bool     runtime_preemption_enabled = true;
-uint32_t runtime_quantum_us         = 5000; /* 5ms */
+uint32_t runtime_quantum_us         = 1000; /* 5ms */
+uint64_t runtime_quantum;                   /* cycles */
 
 uint64_t runtime_boot_timestamp;
+
+struct priority_queue *LocalQueues[18];
 
 /**
  * Returns instructions on use of CLI if used incorrectly
@@ -183,15 +187,20 @@ runtime_configure()
 {
 	/* Scheduler Policy */
 	char *scheduler_policy = getenv("SLEDGE_SCHEDULER");
-	if (scheduler_policy == NULL) scheduler_policy = "MTDS";
-	if (strcmp(scheduler_policy, "MTDS") == 0) {
+	if (scheduler_policy == NULL) scheduler_policy = "MTDBF";
+	if (strcmp(scheduler_policy, "MTDBF") == 0) {
+#ifndef TRAFFIC_CONTROL
+		panic("This scheduler requires the TRAFFIC_CONTROL toggle ON!");
+#endif
+		scheduler = SCHEDULER_MTDBF;
+	} else if (strcmp(scheduler_policy, "MTDS") == 0) {
 		scheduler = SCHEDULER_MTDS;
 	} else if (strcmp(scheduler_policy, "EDF") == 0) {
 		scheduler = SCHEDULER_EDF;
 	} else if (strcmp(scheduler_policy, "FIFO") == 0) {
 		scheduler = SCHEDULER_FIFO;
 	} else {
-		panic("Invalid scheduler policy: %s. Must be {MTDS|EDF|FIFO}\n", scheduler_policy);
+		panic("Invalid scheduler policy: %s. Must be {MTDBF|MTDS|EDF|FIFO}\n", scheduler_policy);
 	}
 	pretty_print_key_value("Scheduler Policy", "%s\n", scheduler_print(scheduler));
 
@@ -223,7 +232,8 @@ runtime_configure()
 			panic("SLEDGE_QUANTUM_US must be less than 999999 ms, saw %ld\n", quantum);
 		runtime_quantum_us = (uint32_t)quantum;
 	}
-	pretty_print_key_value("Quantum", "%u us\n", runtime_quantum_us);
+	runtime_quantum = runtime_quantum_us * runtime_processor_speed_MHz;
+	pretty_print_key_value("Quantum", "%u us = %lu cycles\n", runtime_quantum_us, runtime_quantum);
 
 	sandbox_perf_log_init();
 }
@@ -438,7 +448,8 @@ main(int argc, char **argv)
 
 	printf("Runtime Environment:\n");
 
-	runtime_processor_speed_MHz = runtime_get_processor_speed_MHz();
+	// runtime_processor_speed_MHz = runtime_get_processor_speed_MHz();
+	runtime_processor_speed_MHz = 2700; //////// For testing purposes only!
 	if (unlikely(runtime_processor_speed_MHz == 0)) panic("Failed to detect processor speed\n");
 
 	int heading_length = 30;

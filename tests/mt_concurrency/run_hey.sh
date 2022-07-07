@@ -22,8 +22,8 @@ source percentiles_table.sh || exit 1
 validate_dependencies hey gnuplot jq
 
 declare -gi iterations=10000
-declare -gi duration_sec=60
-declare -ga concurrency=(1 9 18 20 30 40 60 80 100)
+declare -gi duration_sec=5
+declare -ga concurrency=(1 18 20 24 28 32 36 40 50)
 declare -gi deadline_ms=10 #10ms for fib30
 
 run_samples() {
@@ -128,7 +128,7 @@ process_client_results() {
 		# P.S. When using hey -z option, this result is meaningless
 		awk -F, '
 		$7 == 200 {ok++}
-		END{printf "'"$con"',%3.2f\n", (ok / '"$iterations"' * 100)}
+		END{printf "'"$con"',%3.2f\n", (ok / (NR-1) * 100)}
 	' < "$results_directory/con$con.csv" >> "$results_directory/success.csv"
 
 		# Filter on 200s, convert from s to us, and sort

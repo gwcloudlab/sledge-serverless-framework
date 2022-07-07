@@ -172,8 +172,14 @@ sandbox_init(struct sandbox *sandbox, struct module *module, int socket_descript
 
 	sandbox->client_socket_descriptor = socket_descriptor;
 	memcpy(&sandbox->client_address, socket_address, sizeof(struct sockaddr));
-	sandbox->timestamp_of.request_arrival = request_arrival_timestamp;
-	sandbox->absolute_deadline            = request_arrival_timestamp + module->relative_deadline;
+	sandbox->timestamp_of.request_arrival = sandbox->timestamp_of.last_extra_demand_request =
+	  request_arrival_timestamp;
+	sandbox->absolute_deadline   = request_arrival_timestamp + module->relative_deadline;
+	sandbox->remaining_execution = (int64_t)admissions_estimate;
+	sandbox->exceeded_estimation = false;
+	// printf("Sandbox get exec time: %ld \n", sandbox->remaining_execution);
+	sandbox->response_code    = 0;
+	sandbox->owned_worker_idx = -2;
 
 	/*
 	 * Admissions Control State
@@ -208,7 +214,14 @@ sandbox_alloc(struct module *module, int socket_descriptor, const struct sockadd
 	sandbox_set_as_allocated(sandbox);
 	sandbox_init(sandbox, module, socket_descriptor, socket_address, request_arrival_timestamp,
 	             admissions_estimate);
+	sandbox_refs[sandbox->id % RUNTIME_MAX_ALIVE_SANDBOXES] = true;
+	sandbox->has_pending_request_for_extra_demand           = false;
 
+	/* TODO: sandbox_meta_init */
+	// sandbox->sandbox_meta.sandbox_shadow = sandbox;
+	// sandbox->sandbox_meta.id = sandbox->id;
+	// sandbox->sandbox_meta.absolute_deadline = sandbox->absolute_deadline;
+	// sandbox->sandbox_meta.pq_idx_in_module_queue = 0;
 
 	return sandbox;
 }
@@ -218,7 +231,7 @@ sandbox_deinit(struct sandbox *sandbox)
 {
 	assert(sandbox != NULL);
 	assert(sandbox != current_sandbox_get());
-	assert(sandbox->state == SANDBOX_ERROR || sandbox->state == SANDBOX_COMPLETE);
+	// assert(sandbox->state == SANDBOX_ERROR || sandbox->state == SANDBOX_COMPLETE); ////// temp
 
 	module_release(sandbox->module);
 
@@ -242,5 +255,6 @@ sandbox_free(struct sandbox *sandbox)
 	assert(sandbox->state == SANDBOX_ERROR || sandbox->state == SANDBOX_COMPLETE);
 
 	sandbox_deinit(sandbox);
+	sandbox_refs[sandbox->id % RUNTIME_MAX_ALIVE_SANDBOXES] = false;
 	free(sandbox);
 }

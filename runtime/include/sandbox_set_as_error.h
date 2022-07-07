@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include "admissions_control.h"
+#include "traffic_control.h"
 #include "arch/getcycles.h"
 #include "local_completion_queue.h"
 #include "local_runqueue.h"
@@ -33,23 +35,29 @@ sandbox_set_as_error(struct sandbox *sandbox, sandbox_state_t last_state)
 	switch (last_state) {
 	case SANDBOX_ALLOCATED:
 		break;
-	case SANDBOX_RUNNING_SYS: {
-		local_runqueue_delete(sandbox);
+	case SANDBOX_INITIALIZED:
+		/* This is a global work-shedding scenario, where we kill a job from the global queue */
+		break;
+	case SANDBOX_RUNNABLE:
+	case SANDBOX_RUNNING_SYS:
+	case SANDBOX_INTERRUPTED:
+	case SANDBOX_PREEMPTED:
+		if (sandbox->owned_worker_idx >= 0) { local_runqueue_delete(sandbox); }
+	case SANDBOX_ASLEEP:
 		sandbox_free_linear_memory(sandbox);
 		sandbox_deinit_http_buffers(sandbox);
 		break;
-	}
-	default: {
+	default:
 		panic("Sandbox %lu | Illegal transition from %s to Error\n", sandbox->id,
 		      sandbox_state_stringify(last_state));
-	}
 	}
 
 	/* State Change Bookkeeping */
 	assert(now > sandbox->timestamp_of.last_state_change);
-	sandbox->last_duration_of_exec = now - sandbox->timestamp_of.last_state_change;
-	sandbox->duration_of_state[last_state] += sandbox->last_duration_of_exec;
+	sandbox->last_state_duration = now - sandbox->timestamp_of.last_state_change;
+	sandbox->duration_of_state[last_state] += sandbox->last_state_duration;
 	sandbox->timestamp_of.last_state_change = now;
+	sandbox->total_time                     = now - sandbox->timestamp_of.request_arrival;
 	sandbox_state_history_append(&sandbox->state_history, SANDBOX_ERROR);
 	sandbox_state_totals_increment(SANDBOX_ERROR);
 	sandbox_state_totals_decrement(last_state);
@@ -67,10 +75,8 @@ sandbox_set_as_error(struct sandbox *sandbox, sandbox_state_t last_state)
 static inline void
 sandbox_exit_error(struct sandbox *sandbox)
 {
-	assert(sandbox->state == SANDBOX_RUNNING_SYS);
-	sandbox_set_as_error(sandbox, SANDBOX_RUNNING_SYS);
+	// assert(sandbox->state == SANDBOX_RUNNING_SYS || sandbox->state == SANDBOX_INTERRUPTED);
+	sandbox_set_as_error(sandbox, sandbox->state);
 
-	if (module_is_paid(sandbox->module)) {
-		atomic_fetch_sub(&sandbox->module->remaining_budget, sandbox->last_duration_of_exec);
-	}
+	sandbox_process_scheduler_updates(sandbox);
 }

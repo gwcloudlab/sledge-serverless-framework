@@ -10,10 +10,12 @@
 #include "global_request_scheduler_deque.h"
 #include "global_request_scheduler_minheap.h"
 #include "global_request_scheduler_mtds.h"
+#include "global_request_scheduler_mtdbf.h"
 #include "local_runqueue.h"
 #include "local_runqueue_minheap.h"
 #include "local_runqueue_list.h"
 #include "local_runqueue_mtds.h"
+#include "local_runqueue_mtdbf.h"
 #include "panic.h"
 #include "sandbox_functions.h"
 #include "sandbox_types.h"
@@ -65,12 +67,60 @@
 
 enum SCHEDULER
 {
-	SCHEDULER_FIFO = 0,
-	SCHEDULER_EDF  = 1,
-	SCHEDULER_MTDS = 2
+	SCHEDULER_FIFO  = 0,
+	SCHEDULER_EDF   = 1,
+	SCHEDULER_MTDS  = 2,
+	SCHEDULER_MTDBF = 3
 };
 
 extern enum SCHEDULER scheduler;
+
+static inline struct sandbox *
+scheduler_mtdbf_get_next()
+{
+	/* Get the deadline of the sandbox at the head of the local queue */
+	struct sandbox *local          = local_runqueue_get_next();
+	uint64_t        local_deadline = local == NULL ? UINT64_MAX : local->absolute_deadline;
+	struct sandbox *global         = NULL;
+
+	// uint64_t global_deadline = global_request_scheduler_peek();
+	struct sandbox_metadata global_metadata = global_request_scheduler_peek_metadata();
+
+	/* Try to pull and allocate from the global queue if earlier
+	 * This will be placed at the head of the local runqueue */
+	// if (global_deadline < local_deadline) {
+	if (global_metadata.absolute_deadline < local_deadline
+	       && dbf_check_supply_quick(worker_dbf, global_metadata.arrival_timestamp, global_metadata.absolute_deadline,
+	                                 global_metadata.remaining_execution)) {
+		if (global_request_scheduler_remove_if_earlier(&global, local_deadline) == 0) {
+			assert(global != NULL);
+			assert(global->absolute_deadline < local_deadline);
+			if (sandbox_validate_self_lifetime(global) == 0) {
+				if (global->state == SANDBOX_INITIALIZED) {
+					sandbox_prepare_execution_environment(global);
+					sandbox_set_as_runnable(global, SANDBOX_INITIALIZED);
+				} else {
+					debuglog("Resuming writeback\n");
+				}
+
+				assert(global->state == SANDBOX_RUNNABLE || global->state == SANDBOX_PREEMPTED);
+				local_runqueue_add(global);
+				worker_thread_epoll_add_sandbox(global);
+
+				// sandbox_prepare_execution_environment(global);
+				// assert(global->state == SANDBOX_INITIALIZED);
+				// sandbox_set_as_runnable(global, SANDBOX_INITIALIZED);
+				// break;
+			}
+			// global_deadline = global_request_scheduler_peek();
+			// global_metadata = global_request_scheduler_mtdbf_peek_meta();
+		}// else
+			//break;
+}
+
+/* Return what is at the head of the local runqueue or NULL if empty */
+return local_runqueue_get_next();
+}
 
 static inline struct sandbox *
 scheduler_mtds_get_next()
@@ -162,6 +212,8 @@ static inline struct sandbox *
 scheduler_get_next()
 {
 	switch (scheduler) {
+	case SCHEDULER_MTDBF:
+		return scheduler_mtdbf_get_next();
 	case SCHEDULER_MTDS:
 		return scheduler_mtds_get_next();
 	case SCHEDULER_EDF:
@@ -177,6 +229,9 @@ static inline void
 scheduler_initialize()
 {
 	switch (scheduler) {
+	case SCHEDULER_MTDBF:
+		global_request_scheduler_mtdbf_initialize();
+		break;
 	case SCHEDULER_MTDS:
 		global_request_scheduler_mtds_initialize();
 		break;
@@ -195,6 +250,9 @@ static inline void
 scheduler_runqueue_initialize()
 {
 	switch (scheduler) {
+	case SCHEDULER_MTDBF:
+		local_runqueue_mtdbf_initialize();
+		break;
 	case SCHEDULER_MTDS:
 		local_runqueue_mtds_initialize();
 		break;
@@ -219,6 +277,8 @@ scheduler_print(enum SCHEDULER variant)
 		return "EDF";
 	case SCHEDULER_MTDS:
 		return "MTDS";
+	case SCHEDULER_MTDBF:
+		return "MTDBF";
 	}
 }
 
@@ -246,6 +306,13 @@ scheduler_log_sandbox_switch(struct sandbox *current_sandbox, struct sandbox *ne
 static inline void
 scheduler_preemptive_switch_to(ucontext_t *interrupted_context, struct sandbox *next)
 {
+	/* Switch to base context */
+	if (next == NULL) {
+		arch_context_restore_fast(&interrupted_context->uc_mcontext, &worker_thread_base_context);
+		current_sandbox_set(NULL);
+		return;
+	}
+
 	/* Switch to next sandbox */
 	switch (next->ctxt.variant) {
 	case ARCH_CONTEXT_VARIANT_FAST: {
@@ -269,12 +336,77 @@ scheduler_preemptive_switch_to(ucontext_t *interrupted_context, struct sandbox *
 	}
 }
 
+static inline int
+scheduler_check_messages_from_listener()
+{
+	int rc = 0;
+
+#ifdef TRAFFIC_CONTROL
+	assert(comm_to_workers);
+
+	struct message           new_message = { 0 };
+	struct comm_with_worker *ctw         = &comm_to_workers[worker_thread_idx];
+	assert(ctw);
+	assert(ctw->worker_idx == worker_thread_idx);
+
+	// printf ("[WORKER] Worker#%d CTW Ring size: %u\n", worker_thread_idx, ck_ring_size(&ctw->worker_ring));
+	assert(ck_ring_size(&ctw->worker_ring) < LISTENER_THREAD_RING_SIZE);
+
+	while (ck_ring_dequeue_spsc_message(&ctw->worker_ring, ctw->worker_ring_buffer, &new_message)) {
+		struct sandbox *sandbox_to_kill = new_message.sandbox;
+		assert(sandbox_to_kill);
+
+		// debuglog("New message from Listener to Worker #%d. Its contents: \n\
+		// sandbox->id: %lu \n\
+		// sandbox->owned_worker: %d \n\
+		// sandbox->pq_idx_in_runqueue: %lu \n", new_message.sender_worker_idx,
+		//        sandbox_to_kill->id, sandbox_to_kill->owned_worker_idx, sandbox_to_kill->pq_idx_in_runqueue);
+		// assert(sandbox_to_kill->state != SANDBOX_ASLEEP);
+		// printf ("sandbox_refs[%lu] = %s\n", new_message.sandbox_id,
+		// sandbox_refs[new_message.sandbox_id%RUNTIME_MAX_ALIVE_SANDBOXES] ? "true" : "false"); assert
+		// (sandbox_to_kill->id == new_message.sandbox_id);
+
+		/* Check if the sandbox is still alive (not freed yet) */
+		if (sandbox_refs[new_message.sandbox_id % RUNTIME_MAX_ALIVE_SANDBOXES]) {
+			// if (sandbox_to_kill->id != new_message.sandbox_id) {
+			// printf("sandbox_refs[%lu %% MAX] = %d\n", new_message.sandbox_id,
+			// sandbox_refs[new_message.sandbox_id % RUNTIME_MAX_ALIVE_SANDBOXES]);
+			// }
+			assert(sandbox_to_kill->id == new_message.sandbox_id);
+
+			sandbox_to_kill->has_pending_request_for_extra_demand = false;
+
+			if (!new_message.extra_demand_request_approved) {
+				sandbox_to_kill->response_code = 4091;
+
+				/* Make sure the sandbox is in a non-terminal or asleep state.
+				 * If terminal, the below cleanup already took place.
+				 * If asleep, wait till it wakes up, clean up then by using the above response_code.*/
+				if (sandbox_to_kill->pq_idx_in_runqueue != 0) {
+					// debuglog("Worker #%d is shedding sandbox #%lu\n", worker_thread_idx,
+					// sandbox_to_kill->id);
+					client_socket_send_oneshot(sandbox_to_kill->client_socket_descriptor,
+					                           http_header_build(409), http_header_len(409));
+					sandbox_close_http(sandbox_to_kill);
+					sandbox_exit_error(sandbox_to_kill);
+					local_completion_queue_add(sandbox_to_kill);
+				}
+			}
+		}
+
+		// memset(&new_message, 0, sizeof(new_message));
+		new_message.sandbox = NULL;
+	}
+#endif
+	return rc;
+}
+
 /**
  * Call either at preemptions or blockings to update the Deferrable Server
  *  properties for the given tenant.
  */
 static inline void
-scheduler_process_policy_specific_updates_on_interrupts()
+scheduler_process_policy_specific_updates_on_interrupts(struct sandbox *interrupted_sandbox)
 {
 	switch (scheduler) {
 	case SCHEDULER_FIFO:
@@ -283,6 +415,12 @@ scheduler_process_policy_specific_updates_on_interrupts()
 		return;
 	case SCHEDULER_MTDS:
 		local_timeout_queue_process_promotions();
+		return;
+	case SCHEDULER_MTDBF:
+		scheduler_check_messages_from_listener();
+		if (interrupted_sandbox->state != SANDBOX_ERROR) {
+			sandbox_process_scheduler_updates(interrupted_sandbox);
+		}
 		return;
 	}
 }
@@ -304,12 +442,19 @@ scheduler_preemptive_sched(ucontext_t *interrupted_context)
 	struct sandbox *interrupted_sandbox = current_sandbox_get();
 	assert(interrupted_sandbox != NULL);
 	assert(interrupted_sandbox->state == SANDBOX_INTERRUPTED);
+	// printf ("Worker #%d interrupted sandbox #%lu\n", worker_thread_idx, interrupted_sandbox->id);
+	scheduler_process_policy_specific_updates_on_interrupts(interrupted_sandbox);
 
-	scheduler_process_policy_specific_updates_on_interrupts();
+	if (interrupted_sandbox->response_code == 4092) {
+		assert(interrupted_sandbox->pq_idx_in_runqueue > 0);
+		local_runqueue_delete(interrupted_sandbox);
+	}
 
 	struct sandbox *next = scheduler_get_next();
 	/* Assumption: the current sandbox is on the runqueue, so the scheduler should always return something */
-	assert(next != NULL);
+	// assert(next != NULL);
+	/* Assumption: the current sandbox is still there, even if the worker had to shed it from its runqueue above */
+	assert(interrupted_sandbox != NULL);
 
 	/* If current equals next, no switch is necessary, so resume execution */
 	if (interrupted_sandbox == next) {
@@ -323,13 +468,21 @@ scheduler_preemptive_sched(ucontext_t *interrupted_context)
 
 	/* Preempt executing sandbox */
 	scheduler_log_sandbox_switch(interrupted_sandbox, next);
-	sandbox_preempt(interrupted_sandbox);
+	if (interrupted_sandbox->state != SANDBOX_ERROR) {
+		sandbox_preempt(interrupted_sandbox);
 
-	// Write back global at idx 0
-	wasm_globals_set_i64(&interrupted_sandbox->globals, 0, sledge_abi__current_wasm_module_instance.abi.wasmg_0,
-	                     true);
+		// Write back global at idx 0
+		wasm_globals_set_i64(&interrupted_sandbox->globals, 0,
+		                     sledge_abi__current_wasm_module_instance.abi.wasmg_0, true);
 
-	arch_context_save_slow(&interrupted_sandbox->ctxt, &interrupted_context->uc_mcontext);
+		arch_context_save_slow(&interrupted_sandbox->ctxt, &interrupted_context->uc_mcontext);
+
+		if (interrupted_sandbox->response_code == 4092) {
+			worker_thread_epoll_remove_sandbox(interrupted_sandbox);
+			global_request_scheduler_add(interrupted_sandbox);
+			// debuglog("Writeback to global\n");
+		}
+	}
 	scheduler_preemptive_switch_to(interrupted_context, next);
 }
 

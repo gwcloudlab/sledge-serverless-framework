@@ -47,7 +47,7 @@ current_sandbox_sleep()
 /**
  * @brief Switches from an executing sandbox to the worker thread base context
  *
- * This places the current sandbox on the completion queue if in RETURNED state
+ * This places the current sandbox on the completion queue if in RETURNED or ERROR state
  */
 void
 current_sandbox_exit()
@@ -62,8 +62,15 @@ current_sandbox_exit()
 		sandbox_exit_success(exiting_sandbox);
 		break;
 	case SANDBOX_RUNNING_SYS:
+		// case SANDBOX_INTERRUPTED:
+		// case SANDBOX_ASLEEP:
 		sandbox_exit_error(exiting_sandbox);
 		break;
+	case SANDBOX_INTERRUPTED:
+		sandbox_exit_error(exiting_sandbox);
+		local_completion_queue_add(exiting_sandbox);
+		return;
+		// break;
 	default:
 		panic("Cooperatively switching from a sandbox in a non-terminal %s state\n",
 		      sandbox_state_stringify(exiting_sandbox->state));
@@ -213,14 +220,13 @@ current_sandbox_fini()
 	sandbox_close_http(sandbox);
 	sandbox_set_as_returned(sandbox, SANDBOX_RUNNING_SYS);
 	if (module_is_paid(sandbox->module)) {
-		atomic_fetch_sub(&sandbox->module->remaining_budget, sandbox->last_duration_of_exec);
+		atomic_fetch_sub(&sandbox->module->remaining_budget, sandbox->last_state_duration);
 	}
 
 done:
 	/* Cleanup connection and exit sandbox */
 	generic_thread_dump_lock_overhead();
 	current_sandbox_exit();
-	assert(0);
 err:
 	debuglog("%s", error_message);
 	assert(sandbox->state == SANDBOX_RUNNING_SYS);
@@ -248,4 +254,80 @@ current_sandbox_start(void)
 	}
 
 	current_sandbox_fini();
+}
+
+int
+sandbox_validate_self_deadline(struct sandbox *sandbox)
+{
+	const uint64_t now = __getcycles();
+	int            rc  = 0;
+
+	if (sandbox->absolute_deadline > now) goto done;
+	// printf("Shed wth 4081\n");
+	sandbox->response_code = 4081;
+	rc                     = -1;
+
+	const int http_status_code = sandbox->response_code / 10;
+
+	client_socket_send_oneshot(sandbox->client_socket_descriptor, http_header_build(http_status_code),
+	                           http_header_len(http_status_code));
+	client_socket_close(sandbox->client_socket_descriptor, &sandbox->client_address);
+	sandbox->timestamp_of.worker_allocation = now; // TODO: remove later if added to global_remove_if_earlier
+
+	// sandbox_set_as_error(sandbox, SANDBOX_INITIALIZED);
+	// sandbox_process_scheduler_updates(sandbox);
+	sandbox_exit_error(sandbox);
+	sandbox_free(sandbox);
+done:
+	return rc;
+}
+
+int
+sandbox_validate_self_lifetime(struct sandbox *sandbox)
+{
+	const uint64_t now = __getcycles();
+	int            rc  = 0;
+
+	if (sandbox->absolute_deadline <= now) {
+		// printf("Shed wth 4081\n");
+		sandbox->response_code = 4081;
+		rc                     = -1;
+	} else if (sandbox->absolute_deadline - now
+	           < sandbox->remaining_execution /* sandbox->module->estimated_exec_info.perf_window.by_duration[0].execution_time */) {
+		// printf("Shed wth 4082\n");
+		sandbox->response_code = 4081;
+		rc                     = -2;
+	} else {
+		goto done;
+	}
+
+	const int http_status_code = sandbox->response_code / 10;
+
+	client_socket_send_oneshot(sandbox->client_socket_descriptor, http_header_build(http_status_code),
+	                           http_header_len(http_status_code));
+	client_socket_close(sandbox->client_socket_descriptor, &sandbox->client_address);
+	sandbox->timestamp_of.worker_allocation = now; // TODO: remove later if added to global_remove_if_earlier
+
+	// sandbox_set_as_error(sandbox, SANDBOX_INITIALIZED);
+	// sandbox_process_scheduler_updates(sandbox);
+	sandbox_exit_error(sandbox);
+	sandbox_free(sandbox);
+done:
+	return rc;
+}
+
+void
+sandbox_kill_self(struct sandbox *sandbox_to_kill)
+{
+#ifdef TRAFFIC_CONTROL
+	assert(sandbox_to_kill->state == SANDBOX_ASLEEP);
+
+	const int http_status_code = sandbox_to_kill->response_code / 10;
+
+	client_socket_send_oneshot(sandbox_to_kill->client_socket_descriptor, http_header_build(http_status_code),
+	                           http_header_len(http_status_code));
+	sandbox_close_http(sandbox_to_kill);
+	sandbox_exit_error(sandbox_to_kill);
+	local_completion_queue_add(sandbox_to_kill);
+#endif
 }

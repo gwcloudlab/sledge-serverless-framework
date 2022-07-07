@@ -8,7 +8,7 @@ set ylabel "Latency (us)"
 
 set key left top
 
-set xrange [-5:105]
+set xrange [-5:]
 set yrange [0:]
 
 set style histogram columnstacked

@@ -28,11 +28,5 @@ int             global_request_scheduler_remove_if_earlier(struct sandbox **, ui
 int             global_request_scheduler_remove_with_mt_class(struct sandbox **, uint64_t target_deadline,
                                                               enum MULTI_TENANCY_CLASS mt_class);
 uint64_t        global_request_scheduler_peek(void);
-
-
-static inline uint64_t
-sandbox_get_priority_fn(void *element)
-{
-	struct sandbox *sandbox = (struct sandbox *)element;
-	return sandbox->absolute_deadline;
-};
+void global_request_scheduler_update_highest_priority(const void *element);
+struct sandbox_metadata global_request_scheduler_peek_metadata();

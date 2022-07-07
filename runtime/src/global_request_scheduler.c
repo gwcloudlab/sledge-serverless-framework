@@ -3,6 +3,8 @@
 #include "global_request_scheduler.h"
 #include "panic.h"
 
+static struct sandbox_metadata global_highest_priority_metadata;
+
 /* Default uninitialized implementations of the polymorphic interface */
 noreturn static struct sandbox *
 uninitialized_add(struct sandbox *arg)
@@ -102,4 +104,34 @@ uint64_t
 global_request_scheduler_peek()
 {
 	return global_request_scheduler.peek_fn();
+}
+
+/**
+ * Peeks at the metadata of the highest priority sandbox
+ * @returns metadata of the highest priority sandbox
+ */
+struct sandbox_metadata
+global_request_scheduler_peek_metadata()
+{
+	return global_highest_priority_metadata;
+}
+
+/**
+ * Updates the metadata of the highest priority sandbox
+ * @param element the highest priority sandbox
+ */
+void
+global_request_scheduler_update_highest_priority(const void *element)
+{
+	if (element == NULL) {
+		global_highest_priority_metadata.absolute_deadline   = UINT64_MAX;
+		global_highest_priority_metadata.arrival_timestamp   = 0;
+		global_highest_priority_metadata.remaining_execution = 0;
+		return;
+	}
+
+	const struct sandbox *sandbox                         = element;
+	global_highest_priority_metadata.arrival_timestamp   = sandbox->timestamp_of.request_arrival;
+	global_highest_priority_metadata.absolute_deadline   = sandbox->absolute_deadline;
+	global_highest_priority_metadata.remaining_execution = sandbox->remaining_execution;
 }

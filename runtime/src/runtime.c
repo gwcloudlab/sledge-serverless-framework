@@ -11,12 +11,14 @@
 #include <pthread.h>
 
 #include "admissions_control.h"
+#include "traffic_control.h"
 #include "arch/context.h"
 #include "client_socket.h"
 #include "debuglog.h"
 #include "global_request_scheduler_deque.h"
 #include "global_request_scheduler_minheap.h"
 #include "global_request_scheduler_mtds.h"
+#include "global_request_scheduler_mtdbf.h"
 #include "http_parser_settings.h"
 #include "listener_thread.h"
 #include "module.h"
@@ -33,6 +35,9 @@ pthread_t *runtime_worker_threads;
 int       *runtime_worker_threads_argument;
 /* The active deadline of the sandbox running on each worker thread */
 uint64_t *runtime_worker_threads_deadline;
+
+/* Tracks alive sandboxes */
+bool sandbox_refs[RUNTIME_MAX_ALIVE_SANDBOXES] = { false };
 
 /******************************************
  * Shared Process / Listener Thread Logic *
@@ -119,6 +124,7 @@ runtime_initialize(void)
 
 	http_parser_settings_initialize();
 	admissions_control_initialize();
+	traffic_control_initialize();
 }
 
 static void

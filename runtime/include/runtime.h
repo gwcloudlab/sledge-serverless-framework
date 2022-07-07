@@ -33,7 +33,10 @@
 #define RUNTIME_MAX_BUDGET_US_MAX         3600000000
 
 #define RUNTIME_RUNQUEUE_SIZE     256
-#define RUNTIME_MODULE_QUEUE_SIZE 4096 * 100
+#define RUNTIME_MODULE_QUEUE_SIZE 4096
+
+#define RUNTIME_MAX_CPU_UTIL_PERCENTILE 100
+#define RUNTIME_MAX_ALIVE_SANDBOXES     1048576 // 1 << 20
 
 enum RUNTIME_SIGALRM_HANDLER
 {
@@ -44,16 +47,19 @@ enum RUNTIME_SIGALRM_HANDLER
 extern bool                         runtime_preemption_enabled;
 extern uint32_t                     runtime_processor_speed_MHz;
 extern uint32_t                     runtime_quantum_us;
+extern uint64_t                     runtime_quantum;
 extern enum RUNTIME_SIGALRM_HANDLER runtime_sigalrm_handler;
 extern pthread_t                   *runtime_worker_threads;
 extern uint32_t                     runtime_worker_threads_count;
 extern int                         *runtime_worker_threads_argument;
 extern uint64_t                    *runtime_worker_threads_deadline;
 extern uint64_t                     runtime_boot_timestamp;
+extern bool                         sandbox_refs[];
 
 extern void runtime_initialize(void);
 extern void runtime_set_pthread_prio(pthread_t thread, unsigned int nice);
 extern void runtime_set_resource_limits_to_max(void);
+extern void runtime_cleanup();
 
 /* External Symbols */
 extern int   expand_memory(void);
