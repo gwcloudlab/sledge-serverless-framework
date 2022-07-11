@@ -215,7 +215,7 @@ sandbox_alloc(struct module *module, int socket_descriptor, const struct sockadd
 	sandbox_init(sandbox, module, socket_descriptor, socket_address, request_arrival_timestamp,
 	             admissions_estimate);
 	sandbox_refs[sandbox->id % RUNTIME_MAX_ALIVE_SANDBOXES] = true;
-	sandbox->has_pending_request_for_extra_demand           = false;
+	// sandbox->has_pending_request_for_extra_demand           = false;
 
 	/* TODO: sandbox_meta_init */
 	// sandbox->sandbox_meta.sandbox_shadow = sandbox;

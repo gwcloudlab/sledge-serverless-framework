@@ -125,7 +125,7 @@ run_experiments() {
 	local -r workload_ng=$(printf "%s_%03dp" "$APP" 0)
 	local -r port_ng=$INIT_PORT
 
-	local -r con_ng=$((NWORKERS*10)) #144
+	local -r con_ng=$((NWORKERS*10)) #180
 	local -r con_g=$((NWORKERS*4)) #18*4 FULL LOAD
 
 	local -r rps_ng=$((1000000*con_ng/DEADLINE_US)) #11250
@@ -138,10 +138,10 @@ run_experiments() {
 		workload_g=$(printf "%s_%03dp" "$APP" "$ru")
 		port_g=$((INIT_PORT+ru))
 
-		# loadtest -t $((DURATION_sec+OFFSET*2)) -c $con_ng --rps $rps_ng -P $ARG "http://${hostname}:${port_ng}" > "$results_directory/$workload_ng.dat" 2> /dev/null &
-		# app_ng_PID="$!"
+		loadtest -t $((DURATION_sec+OFFSET*2)) -c $con_ng --rps $rps_ng -P $ARG "http://${hostname}:${port_ng}" > "$results_directory/$workload_ng.dat" 2> /dev/null &
+		app_ng_PID="$!"
 
-		# sleep "$OFFSET"s
+		sleep "$OFFSET"s
 		
 		loadtest -t $DURATION_sec -c $con_g --rps $rps_g -P $ARG "http://${hostname}:${port_g}" > "$results_directory/$workload_g.dat" 2> /dev/null &
 		app_g_PID="$!"
@@ -153,12 +153,12 @@ run_experiments() {
 		}
 		printf "\t%s: [OK]\n" "$workload_g"
 
-		# wait -f "$app_ng_PID" || {
-		# 	printf "\t%s: [ERR]\n" "$workload_ng"
-		# 	panic "failed to wait -f $app_ng_PID"
-		# 	return 1
-		# }
-		# printf "\t%s: [OK]\n" "$workload_ng"
+		wait -f "$app_ng_PID" || {
+			printf "\t%s: [ERR]\n" "$workload_ng"
+			panic "failed to wait -f $app_ng_PID"
+			return 1
+		}
+		printf "\t%s: [OK]\n" "$workload_ng"
 	done
 
 	if [ "$CLIENT_TERMINATE_SERVER" == true ]; then
@@ -300,7 +300,7 @@ process_server_results() {
 		if [ "$ru" == 0 ]; then
 			continue
 		fi
-		
+
 		workload=$(printf "%s_%03dp" "$APP" "$ru")
 		mkdir "$results_directory/$workload"
 

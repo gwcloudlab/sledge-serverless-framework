@@ -126,13 +126,6 @@ sandbox_process_scheduler_updates(struct sandbox *sandbox)
 	}
 
 #ifdef TRAFFIC_CONTROL
-	// if (fcntl(sandbox->client_socket_descriptor, F_GETFD) == -1 && sandbox->state != SANDBOX_ERROR &&
-	// sandbox->state!=SANDBOX_RETURNED) { 	printf("Killed sandbox says bye id=%lu, rem=%ld, state=%u!\n",
-	// sandbox->id, 	       sandbox->remaining_execution, sandbox->state);
-	// }
-	// sandbox->remaining_execution -= sandbox->last_state_duration;
-	// debuglog("----------\nsandbox remaining: %ld\n----------\n", sandbox->remaining_execution);
-	// if(sandbox->remaining_execution < 0) panic ("Sandbox OVER expected!");
 
 	struct comm_with_worker *cfw = &comm_from_workers[worker_thread_idx];
 	// struct comm_with_worker *cfw_extra = &comm_from_workers_extra[worker_thread_idx];
@@ -151,7 +144,7 @@ sandbox_process_scheduler_updates(struct sandbox *sandbox)
 	new_message.sender_worker_idx             = worker_thread_idx;
 	new_message.exceeded_estimation           = sandbox->exceeded_estimation;
 	new_message.last_extra_demand_timestamp   = sandbox->timestamp_of.last_extra_demand_request;
-	new_message.extra_demand_request_approved = false;
+	// new_message.extra_demand_request_approved = false;
 
 	new_message.prev_rem_exec = sandbox->remaining_execution;
 	new_message.last_exec_dur = sandbox->last_state_duration;
@@ -167,17 +160,11 @@ sandbox_process_scheduler_updates(struct sandbox *sandbox)
 		const uint64_t adjustment = sandbox->remaining_execution;
 
 		new_message.if_case = 11;
-		// dbf_try_update_demand(worker_dbf, sandbox->timestamp_of.worker_allocation,
-		// sandbox->absolute_deadline-sandbox->timestamp_of.worker_allocation, sandbox->absolute_deadline,
-		//                       adjustment, DBF_REDUCE_EXISTING_DEMAND, &new_message);
 
 		if (sandbox->remaining_execution > 0 && !sandbox->exceeded_estimation) {
-			// if (!sandbox->exceeded_estimation) {
 			dbf_try_update_demand(worker_dbf, sandbox->timestamp_of.request_arrival,
 			                      sandbox->module->relative_deadline, sandbox->absolute_deadline,
 			                      adjustment, DBF_REDUCE_EXISTING_DEMAND, &new_message);
-			// printf("\nWorker %d FINISHED dbf calc for sandbox %lu:\n", worker_thread_idx, sandbox->id);
-			// dbf_print(worker_dbf);
 		}
 
 		sandbox->remaining_execution -= adjustment;
@@ -210,27 +197,21 @@ sandbox_process_scheduler_updates(struct sandbox *sandbox)
 		                              ? sandbox->last_state_duration
 		                              : sandbox->remaining_execution;
 
-		new_message.if_case = 22;
-		// dbf_try_update_demand(worker_dbf, sandbox->timestamp_of.worker_allocation,
-		// sandbox->absolute_deadline-sandbox->timestamp_of.worker_allocation, sandbox->absolute_deadline,
-		//                       adjustment, DBF_REDUCE_EXISTING_DEMAND, &new_message);
+		new_message.if_case = 2;
 		if (!sandbox->exceeded_estimation) {
-			dbf_try_update_demand(worker_dbf, sandbox->timestamp_of.request_arrival,
+			dbf_try_update_demand(worker_dbf, sandbox->timestamp_of.request_arrival /*worker_allocation*/,
 			                      sandbox->module->relative_deadline, sandbox->absolute_deadline,
 			                      adjustment, DBF_REDUCE_EXISTING_DEMAND, &new_message);
 		}
 		sandbox->remaining_execution -= adjustment;
-
 		new_message.adjustment          = adjustment;
 		new_message.dbf_update_mode     = DBF_REDUCE_EXISTING_DEMAND;
 		new_message.remaining_execution = sandbox->remaining_execution;
-
-		new_message.if_case = 2;
-		// printf("Worker %d just executed a little for sandbox %lu!\n\n", worker_thread_idx, sandbox->id);
+		
 		if (!ck_ring_enqueue_spsc_message(&cfw->worker_ring, cfw->worker_ring_buffer, &new_message)) {
 			panic("Ring The buffer was full and the enqueue operation has failed.!")
 		}
-	} // else if (sandbox->remaining_execution >= 0) {
+	}
 
 
 	if (sandbox->remaining_execution == 0 && sandbox->state == SANDBOX_INTERRUPTED) {
@@ -249,15 +230,9 @@ sandbox_process_scheduler_updates(struct sandbox *sandbox)
 		// 	return;
 		// }
 
-		// uint64_t remaining_worker_supply = dbf_get_available_supply_at(worker_dbf,
-		//                                                                sandbox->module->relative_deadline,
-		//                                                                sandbox->absolute_deadline,
-		//                                                                sandbox->module->reservation_percentile);
-
 		const uint64_t extra_demand = runtime_quantum;
 
 		new_message.if_case = 33;
-		// if (remaining_worker_supply > extra_demand) {
 		if (dbf_try_update_demand(worker_dbf, now, sandbox->module->relative_deadline,
 		                          sandbox->absolute_deadline, extra_demand,
 		                          DBF_CHECK_EXISTING_SANDBOX_EXTRA_DEMAND, &new_message)) {
@@ -283,12 +258,6 @@ sandbox_process_scheduler_updates(struct sandbox *sandbox)
 			new_message.prev_rem_exec = 0;
 			new_message.last_exec_dur = 0;
 			new_message.if_case       = 3;
-			// printf("Sending new message to Listener. Its contents: \n\
-// 		sandbox->id: %lu \n\
-// 		sandbox->pq_idx_in_runqueue: %lu \n",
-			// 		       sandbox->id, sandbox->pq_idx_in_runqueue);
-
-			sandbox->has_pending_request_for_extra_demand = true;
 
 			if (!ck_ring_enqueue_spsc_message(&cfw->worker_ring, cfw->worker_ring_buffer, &new_message)) {
 				panic("Ring The buffer was full and the enqueue operation has failed.!")

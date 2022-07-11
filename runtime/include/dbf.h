@@ -37,7 +37,7 @@ struct message {
 	int64_t                    remaining_execution;
 	int                        sender_worker_idx;
 	dbf_update_mode_t          dbf_update_mode;
-	bool                       extra_demand_request_approved;
+	// bool                       extra_demand_request_approved;
 	bool                       exceeded_estimation;
 	uint64_t                   last_extra_demand_timestamp;
 
@@ -217,18 +217,18 @@ dbf_get_demand_overgone_its_supply_at(struct dbf *dbf, uint64_t start_time, uint
 			if (curr_demand_at_time_i - max_supply_at_time_i > demand_overgone) {
 				demand_overgone = curr_demand_at_time_i - max_supply_at_time_i;
 			}
-			if (dbf->base_supply > 0) {
-				printf("DBF_AVAILABLE_SUPPLY_AT\n");
-				printf("Worker ID: %d\n", dbf->worker_idx);
-				printf("Basic supply: %lu\n", dbf->base_supply);
-				printf("Cap=%u\n", dbf->capacity);
-				printf("Abs_arrival_idx=%u\n", absolute_arrival_idx);
-				printf("live_deadline_len=%u\n", live_deadline_len);
-				printf("i=%u, cir_i = %u, iter = %u\n", i, circular_i, iter);
-				printf("curr_demand_at_time_i = %lu\n", curr_demand_at_time_i);
-				printf("max_supply_at_time_i = %lu\n\n", max_supply_at_time_i);
-				dbf_print(dbf);
-			}
+			// if (dbf->base_supply > 0) {
+			// 	printf("DBF_AVAILABLE_SUPPLY_AT\n");
+			// 	printf("Worker ID: %d\n", dbf->worker_idx);
+			// 	printf("Basic supply: %lu\n", dbf->base_supply);
+			// 	printf("Cap=%u\n", dbf->capacity);
+			// 	printf("Abs_arrival_idx=%u\n", absolute_arrival_idx);
+			// 	printf("live_deadline_len=%u\n", live_deadline_len);
+			// 	printf("i=%u, cir_i = %u, iter = %u\n", i, circular_i, iter);
+			// 	printf("curr_demand_at_time_i = %lu\n", curr_demand_at_time_i);
+			// 	printf("max_supply_at_time_i = %lu\n\n", max_supply_at_time_i);
+			// 	dbf_print(dbf);
+			// }
 		}
 	}
 

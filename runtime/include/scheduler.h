@@ -374,9 +374,9 @@ scheduler_check_messages_from_listener()
 			// }
 			assert(sandbox_to_kill->id == new_message.sandbox_id);
 
-			sandbox_to_kill->has_pending_request_for_extra_demand = false;
+			// sandbox_to_kill->has_pending_request_for_extra_demand = false;
 
-			if (!new_message.extra_demand_request_approved) {
+			// if (!new_message.extra_demand_request_approved) {
 				sandbox_to_kill->response_code = 4091;
 
 				/* Make sure the sandbox is in a non-terminal or asleep state.
@@ -391,7 +391,7 @@ scheduler_check_messages_from_listener()
 					sandbox_exit_error(sandbox_to_kill);
 					local_completion_queue_add(sandbox_to_kill);
 				}
-			}
+			// }
 		}
 
 		// memset(&new_message, 0, sizeof(new_message));

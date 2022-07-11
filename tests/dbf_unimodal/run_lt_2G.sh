@@ -39,8 +39,9 @@ declare -r EXPECTED_EXEC_us=4000
 declare -r DEADLINE_US=16000
 declare -r MTDS_REPL_PERIOD_us=0
 declare -r MTDS_MAX_BUDGET_us=0
-# declare -r MTDBF_RESERVATIONS=(5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100)
-declare -ar MTDBF_RESERVATIONS=(0 5 10 20 40 60 80 100) # for quick testing
+
+# There must be only TWO values below, the first one must be zero!
+declare -ar MTDBF_RESERVATIONS=(25 75) # for quick testing
 
 generate_spec() {
 	printf "Generating 'spec.json'...(may take a couple sec)\n"
@@ -111,7 +112,7 @@ run_experiments() {
 	local results_directory="$2"
 
 	# The duration in seconds that the low priority task should run before the high priority task starts
-	local -ir OFFSET=1
+	local -ir OFFSET=0
 
 	printf "Running Experiments\n"
 
@@ -121,17 +122,17 @@ run_experiments() {
 	local app_g_PID
 	local app_ng_PID
 
-	local -r workload_ng=$(printf "%s_%03dp" "$APP" 0)
-	local -r port_ng=$INIT_PORT
+	local -r workload_ng=$(printf "%s_%03dp" "$APP" 25)
+	local -r port_ng=$((INIT_PORT+25))
 
-	local -r con_ng=$((NWORKERS*10)) #180
+	local -r con_ng=$((NWORKERS*4)) #180
 	local -r con_g=$((NWORKERS*4)) #18*4 FULL LOAD
 
 	local -r rps_ng=$((1000000*con_ng/DEADLINE_US)) #11250
 	local -r rps_g=$((1000000*con_g/DEADLINE_US))   #4500
 
 	for ru in "${MTDBF_RESERVATIONS[@]}"; do
-		if [ "$ru" == 0 ]; then
+		if [ "$ru" == 25 ]; then
 			continue
 		fi
 		workload_g=$(printf "%s_%03dp" "$APP" "$ru")
@@ -140,7 +141,7 @@ run_experiments() {
 		loadtest -t $((DURATION_sec+OFFSET*2)) -c $con_ng --rps $rps_ng -P $ARG "http://${hostname}:${port_ng}" > "$results_directory/$workload_ng.dat" 2> /dev/null &
 		app_ng_PID="$!"
 
-		sleep "$OFFSET"s
+		# sleep "$OFFSET"s
 		
 		loadtest -t $DURATION_sec -c $con_g --rps $rps_g -P $ARG "http://${hostname}:${port_g}" > "$results_directory/$workload_g.dat" 2> /dev/null &
 		app_g_PID="$!"

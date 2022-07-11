@@ -51,7 +51,7 @@ struct sandbox {
 	size_t                       pq_idx_in_runqueue;
 	size_t                       pq_idx_in_module_queue;
 	int                          owned_worker_idx;
-	bool                         has_pending_request_for_extra_demand;
+	// bool                         has_pending_request_for_extra_demand;
 	struct sandbox_metadata   *sandbox_meta;
 
 	struct ps_list list; /* used by ps_list's default name-based MACROS for the scheduling runqueue */

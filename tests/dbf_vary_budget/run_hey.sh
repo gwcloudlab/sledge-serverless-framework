@@ -25,8 +25,9 @@ validate_dependencies hey gnuplot jq
 
 # The global configs for the scripts
 declare -r SERVER_LOG_FILE="perf.log"
+declare -r CLIENT_TERMINATE_SERVER=true
 declare -r ITERATIONS=10000 # ignored when DURATION_sec is used
-declare -r DURATION_sec=15
+declare -r DURATION_sec=30
 declare -r NWORKERS=$(($(nproc)-2))
 declare -r INIT_PORT=10000
 declare -r APP=fib30
@@ -35,7 +36,7 @@ declare -r EXPECTED_EXEC_us=4000
 # declare -r DEADLINE_CLIENT_US=21000
 # declare -r RESPONSE_DELAY=1000
 # declare -r DEADLINE_SERVER_US=$((DEADLINE_CLIENT_US-RESPONSE_DELAY))
-declare -r DEADLINE_US=20000
+declare -r DEADLINE_US=16000
 declare -r MTDS_REPL_PERIOD_us=0
 declare -r MTDS_MAX_BUDGET_us=0
 # declare -r MTDBF_RESERVATIONS=(5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100)
@@ -62,6 +63,28 @@ generate_spec() {
 			< "./template.json" \
 			> "./result_${ru}.json"
 	done
+
+	jq ". + { \
+	\"name\": \"Admin\",\
+	\"port\": 11111,\
+	\"expected-execution-us\": ${EXPECTED_EXEC_us},\
+	\"relative-deadline-us\": ${DEADLINE_US},\
+	\"replenishment-period-us\": 0, \
+	\"max-budget-us\": 0, \
+	\"reservation-percentile\": 0}" \
+		< "./template.json" \
+		> "./result_admin.json"
+
+	jq ". + { \
+	\"name\": \"Terminator\",\
+	\"port\": 55555,\
+	\"expected-execution-us\": ${EXPECTED_EXEC_us},\
+	\"relative-deadline-us\": ${DEADLINE_US},\
+	\"replenishment-period-us\": 0, \
+	\"max-budget-us\": 0, \
+	\"reservation-percentile\": 0}" \
+		< "./template.json" \
+		> "./result_terminator.json"
 
 	# Merges all of the multiple specs for a single module
 	jq -s '. | sort_by(.name)' ./result_*.json > "./spec.json"
@@ -101,6 +124,9 @@ run_experiments() {
 	local -r workload_ng=$(printf "%s_%03dp" "$APP" 0)
 	local -r port_ng=$INIT_PORT
 
+	local -r con_ng=$((NWORKERS*10)) #144
+	local -r con_g=$((NWORKERS*4)) #18*4 FULL LOAD
+
 	for ru in "${MTDBF_RESERVATIONS[@]}"; do
 		if [ "$ru" == 0 ]; then
 			continue
@@ -108,12 +134,12 @@ run_experiments() {
 		workload_g=$(printf "%s_%03dp" "$APP" "$ru")
 		port_g=$((INIT_PORT+ru))
 
-		hey -disable-compression -disable-keepalive -disable-redirects -z $((DURATION_sec+OFFSET+1))s -n $ITERATIONS -c $((NWORKERS*6)) -t 0 -o csv -m GET -d $ARG "http://${hostname}:${port_ng}" > "$results_directory/$workload_ng.csv" 2> "$results_directory/$workload_ng-err.dat" &
+		hey -disable-compression -disable-keepalive -disable-redirects -z $((DURATION_sec+OFFSET+1))s -n $ITERATIONS -c $con_ng -t 0 -o csv -m GET -d $ARG "http://${hostname}:${port_ng}" > "$results_directory/$workload_ng.csv" 2> "$results_directory/$workload_ng-err.dat" &
 		app_ng_PID="$!"
 
 		sleep "$OFFSET"s
 		
-		hey -disable-compression -disable-keepalive -disable-redirects -z ${DURATION_sec}s -n "$ITERATIONS" -c 18 -t 0 -o csv -m GET -d $ARG "http://${hostname}:${port_g}" > "$results_directory/$workload_g.csv" 2> "$results_directory/$workload_g-err.dat" &
+		hey -disable-compression -disable-keepalive -disable-redirects -z ${DURATION_sec}s -n "$ITERATIONS" -c $con_g -t 0 -o csv -m GET -d $ARG "http://${hostname}:${port_g}" > "$results_directory/$workload_g.csv" 2> "$results_directory/$workload_g-err.dat" &
 		app_g_PID="$!"
 
 		wait -f "$app_g_PID" || {
@@ -141,6 +167,11 @@ run_experiments() {
 		printf "\t%s: [OK]\n" "$workload_ng"
 	done
 
+	if [ "$CLIENT_TERMINATE_SERVER" == true ]; then
+		printf "Sent a Terminator to the server\n"
+		echo "55" | http "$hostname":55555 &> /dev/null
+	fi
+
 	return 0
 }
 
@@ -165,6 +196,9 @@ process_client_results() {
 	# percentiles_table_header "$results_directory/latency-200.csv" "Res%%"
 
 	for ru in "${MTDBF_RESERVATIONS[@]}"; do
+		# if [ "$ru" == 0 ]; then
+		# 	continue
+		# fi
 		workload=$(printf "%s_%03dp" "$APP" "$ru")
 
 		# Some requests come back with an "Unsolicited response ..." See issue #185
@@ -249,7 +283,8 @@ process_server_results() {
 	printf "Res%%,Throughput\n" >> "$results_directory/throughput.csv"
 	percentiles_table_header "$results_directory/latency.csv" "Res%%"
 
-	local -a metrics=(total queued uninitialized allocated initialized runnable interrupted preempted running_sys running_user asleep returned complete error)
+	# local -a metrics=(total queued uninitialized allocated initialized runnable interrupted preempted running_sys running_user asleep returned complete error)
+	local -a metrics=(total queued running_user asleep)
 
 	local -A fields=(
 		[total]=6
@@ -281,6 +316,9 @@ process_server_results() {
 	# percentiles_table_header "$results_directory/memalloc.csv" "module"
 
 	for ru in "${MTDBF_RESERVATIONS[@]}"; do
+		if [ "$ru" == 0 ]; then
+			continue
+		fi
 		workload=$(printf "%s_%03dp" "$APP" "$ru")
 		mkdir "$results_directory/$workload"
 
@@ -373,6 +411,7 @@ experiment_server_post() {
 		if [[ -f "$__run_sh__base_path/$SLEDGE_SANDBOX_PERF_LOG" ]]; then
 			mv "$__run_sh__base_path/$SLEDGE_SANDBOX_PERF_LOG" "$results_directory/$SERVER_LOG_FILE"
 			process_server_results "$results_directory" || return 1
+			rm "$results_directory/$SLEDGE_SANDBOX_PERF_LOG"
 		else
 			echo "Perf Log was set, but $SERVER_LOG_FILE not found!"
 		fi

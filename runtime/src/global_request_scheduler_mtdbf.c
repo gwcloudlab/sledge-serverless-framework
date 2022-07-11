@@ -337,7 +337,7 @@ global_request_scheduler_mtdbf_shed_work(struct module *bad_module_to_punish, ui
 	// 	printf("rp=%u, max_demand_overgone=%lu\n", module_to_punish->reservation_percentile,
 	// 	       max_demand_overgone);
 	// }
-	assert(module_to_punish->reservation_percentile == 0); ///// temp
+	// assert(module_to_punish->reservation_percentile == 0); ///// temp
 	// printf("Module to punish is: %s\n", module_to_punish->name);
 
 
@@ -363,6 +363,7 @@ global_request_scheduler_mtdbf_shed_work(struct module *bad_module_to_punish, ui
 		// 	goto done;
 		// }
 		// assert(rc == 0);
+		assert(sandbox_meta->terminated == false);
 		sandbox_meta->terminated = true;
 
 		// if (!sandbox_refs[sandbox_meta->id%RUNTIME_MAX_ALIVE_SANDBOXES]) {
@@ -370,7 +371,7 @@ global_request_scheduler_mtdbf_shed_work(struct module *bad_module_to_punish, ui
 		// 	goto done;
 		// }
 
-		if (sandbox_meta->remaining_execution < runtime_quantum) {
+		if (sandbox_meta->remaining_execution < runtime_quantum/2) {
 			printf("Not worth killing this sandbox!\n");
 			// rc = -1;
 			goto done;
@@ -385,7 +386,7 @@ global_request_scheduler_mtdbf_shed_work(struct module *bad_module_to_punish, ui
 		struct message new_message                = { 0 };
 		new_message.sandbox                       = sandbox_meta->sandbox_shadow;
 		new_message.sandbox_id                    = sandbox_meta->id;
-		new_message.extra_demand_request_approved = false;
+		// new_message.extra_demand_request_approved = false;
 
 		new_message.if_case = 555;
 		dbf_try_update_demand(module_to_punish->module_dbf,

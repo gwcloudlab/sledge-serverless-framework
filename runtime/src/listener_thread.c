@@ -112,7 +112,7 @@ check_messages_from_workers()
 
 			// assert(new_message.dbf_update_mode == DBF_REDUCE_EXISTING_DEMAND);
 
-			const uint64_t             now          = new_message.last_extra_demand_timestamp;
+			const uint64_t           now          = new_message.last_extra_demand_timestamp;
 			struct sandbox_metadata *sandbox_meta = new_message.sandbox_meta;
 			assert(new_message.sandbox == sandbox_meta->sandbox_shadow);
 			assert(new_message.module == sandbox_meta->module);
@@ -123,7 +123,7 @@ check_messages_from_workers()
 
 			if (!sandbox_meta->terminated) {
 				sandbox_meta->remaining_execution = new_message.remaining_execution;
-			} else if (sandbox_meta->remaining_execution >= runtime_quantum) {
+			} else if (sandbox_meta->remaining_execution >= runtime_quantum/2) {
 				dbf_try_update_demand(new_message.module->module_dbf, now,
 				                      new_message.module->relative_deadline,
 				                      new_message.absolute_deadline, sandbox_meta->remaining_execution,
@@ -233,19 +233,19 @@ check_messages_from_workers()
 					/* Case #1: Both the tenant and overall system is under utlized. So, approve
 					 * extra demand. */
 					// printf("Approved extra demand for worker %d.\n", worker_idx);
-					new_message.extra_demand_request_approved = true;
+					// new_message.extra_demand_request_approved = true;
 				} else if (!module_can_admit && global_can_admit) {
 					/* Case #2: Tenant is over utilized, but overall system is under utilized. So,
 					 * approve extra demand for work-conservation purposes. */
 					// printf("Approved extra demand for worker %d for work conservation\n",
 					// worker_idx);
-					new_message.extra_demand_request_approved = true;
+					// new_message.extra_demand_request_approved = true;
 				} else if (module_can_admit && !global_can_admit) {
 					/* Case #3: Tenant is under utilized, but overall system is over utilized. So,
 					 * try to shed work and then approve extra demand if possible. */
-					new_message.extra_demand_request_approved = true;
+					// new_message.extra_demand_request_approved = true;
 
-					while (!global_can_admit) {
+					// while (!global_can_admit) {
 						int rc = global_request_scheduler_mtdbf_shed_work(NULL, now,
 						                                                  new_message
 						                                                    .absolute_deadline);
@@ -256,29 +256,34 @@ check_messages_from_workers()
 							// assert(0);
 							// new_message.extra_demand_request_approved = false;
 							printf("Just approved extra demand, since guaranteed\n");
-							break;
+							// break;
 						}
 
-						new_message.if_case = 334;
-						global_can_admit =
-						  dbf_try_update_demand(global_dbf, now,
-						                        new_message.module->relative_deadline,
-						                        new_message.absolute_deadline,
-						                        new_message.adjustment,
-						                        DBF_CHECK_EXISTING_SANDBOX_EXTRA_DEMAND,
-						                        &new_message);
-					}
+						// new_message.if_case = 334;
+						// global_can_admit =
+						//   dbf_try_update_demand(global_dbf, now,
+						//                         new_message.module->relative_deadline,
+						//                         new_message.absolute_deadline,
+						//                         new_message.adjustment,
+						//                         DBF_CHECK_EXISTING_SANDBOX_EXTRA_DEMAND,
+						//                         &new_message);
+					// }
 				} else {
 					/* Case #4: Do not approve extra demand. */
 					// printf("Denied extra demand for worker %d.\n", worker_idx);
-					new_message.extra_demand_request_approved = false;
+					// new_message.extra_demand_request_approved = false;
+					if (!ck_ring_enqueue_spsc_message(&ctw->worker_ring, ctw->worker_ring_buffer,
+					                                  &new_message)) {
+						panic("Ring The buffer was full and the enqueue "
+						      "operation has failed.!")
+					}
 				}
 
-				if (!ck_ring_enqueue_spsc_message(&ctw->worker_ring, ctw->worker_ring_buffer,
-				                                  &new_message)) {
-					panic("Ring The buffer was full and the enqueue "
-					      "operation has failed.!")
-				}
+				// if (!ck_ring_enqueue_spsc_message(&ctw->worker_ring, ctw->worker_ring_buffer,
+				//                                   &new_message)) {
+				// 	panic("Ring The buffer was full and the enqueue "
+				// 	      "operation has failed.!")
+				// }
 			}
 			memset(&new_message, 0, sizeof(new_message));
 		}

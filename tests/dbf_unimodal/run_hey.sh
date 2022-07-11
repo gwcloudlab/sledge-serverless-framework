@@ -135,10 +135,10 @@ run_experiments() {
 		workload_g=$(printf "%s_%03dp" "$APP" "$ru")
 		port_g=$((INIT_PORT+ru))
 
-		# hey -disable-compression -disable-keepalive -disable-redirects -z $((DURATION_sec+OFFSET+1))s -n $ITERATIONS -c $con_ng -t 0 -o csv -m GET -d $ARG "http://${hostname}:${port_ng}" > "$results_directory/$workload_ng.csv" 2> "$results_directory/$workload_ng-err.dat" &
-		# app_ng_PID="$!"
+		hey -disable-compression -disable-keepalive -disable-redirects -z $((DURATION_sec+OFFSET+1))s -n $ITERATIONS -c $con_ng -t 0 -o csv -m GET -d $ARG "http://${hostname}:${port_ng}" > "$results_directory/$workload_ng.csv" 2> "$results_directory/$workload_ng-err.dat" &
+		app_ng_PID="$!"
 
-		# sleep "$OFFSET"s
+		sleep "$OFFSET"s
 		
 		hey -disable-compression -disable-keepalive -disable-redirects -z ${DURATION_sec}s -n "$ITERATIONS" -c $con_g -t 0 -o csv -m GET -d $ARG "http://${hostname}:${port_g}" > "$results_directory/$workload_g.csv" 2> "$results_directory/$workload_g-err.dat" &
 		app_g_PID="$!"
@@ -155,17 +155,17 @@ run_experiments() {
 		}
 		printf "\t%s: [OK]\n" "$workload_g"
 
-		# wait -f "$app_ng_PID" || {
-		# 	printf "\t%s: [ERR]\n" "$workload_ng"
-		# 	panic "failed to wait -f $app_ng_PID"
-		# 	return 1
-		# }
-		# get_result_count "$results_directory/$workload_ng.csv" || {
-		# 	printf "\t%s: [ERR]\n" "$workload_ng"
-		# 	panic "$workload_ng has zero requests."
-		# 	return 1
-		# }
-		# printf "\t%s: [OK]\n" "$workload_ng"
+		wait -f "$app_ng_PID" || {
+			printf "\t%s: [ERR]\n" "$workload_ng"
+			panic "failed to wait -f $app_ng_PID"
+			return 1
+		}
+		get_result_count "$results_directory/$workload_ng.csv" || {
+			printf "\t%s: [ERR]\n" "$workload_ng"
+			panic "$workload_ng has zero requests."
+			return 1
+		}
+		printf "\t%s: [OK]\n" "$workload_ng"
 	done
 
 	if [ "$CLIENT_TERMINATE_SERVER" == true ]; then
