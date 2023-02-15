@@ -14,11 +14,22 @@ static pthread_mutex_t global_request_scheduler_deque_mutex = PTHREAD_MUTEX_INIT
  * @param sandbox_raw
  * @returns pointer to sandbox if added. NULL otherwise
  */
+
+
+lock_t global_lock;
+
 static struct sandbox *
 global_request_scheduler_deque_add(struct sandbox *sandbox)
 {
 	int return_code = 1;
+	
+	//lock_node_t node = {};
+	//lock_lock(&global_lock, &node);
+	pthread_mutex_lock(&global_request_scheduler_deque_mutex);	
 	return_code = deque_push_sandbox(global_request_scheduler_deque, &sandbox);
+	pthread_mutex_unlock(&global_request_scheduler_deque_mutex);	
+	/* unlock */
+	//lock_unlock(&global_lock, &node);
 	if (return_code != 0) return NULL;
 	return sandbox;
 }
@@ -35,7 +46,14 @@ global_request_scheduler_deque_add(struct sandbox *sandbox)
 static int
 global_request_scheduler_deque_remove(struct sandbox **removed_sandbox)
 {
-	return deque_steal_sandbox(global_request_scheduler_deque, removed_sandbox);
+	//lock_node_t node = {};
+	
+	//lock_lock(&global_lock, &node);
+	pthread_mutex_lock(&global_request_scheduler_deque_mutex);	
+	int ret = deque_pop_sandbox(global_request_scheduler_deque, removed_sandbox);
+	pthread_mutex_unlock(&global_request_scheduler_deque_mutex);	
+	//lock_unlock(&global_lock, &node);
+	return ret; 
 }
 
 static int
@@ -60,6 +78,6 @@ global_request_scheduler_deque_initialize()
 		.remove_fn            = global_request_scheduler_deque_remove,
 		.remove_if_earlier_fn = global_request_scheduler_deque_remove_if_earlier
 	};
-
+	//lock_init(&global_lock);
 	global_request_scheduler_initialize(&config);
 }

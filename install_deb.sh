@@ -62,6 +62,7 @@ sudo apt-get update && sudo apt-get install -y --no-install-recommends \
 wget $SHFMT_URL -O shfmt && chmod +x shfmt && sudo mv shfmt /usr/local/bin/shfmt
 
 sudo ./install_llvm.sh $LLVM_VERSION
+curl -sS -L -O $WASI_SDK_URL && sudo dpkg -i wasi-sdk_12.0_amd64.deb && rm -f wasi-sdk_12.0_amd64.deb
 
 if [ -z "${WASI_SDK_PATH}" ]; then
 	export WASI_SDK_PATH=/opt/wasi-sdk

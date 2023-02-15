@@ -60,7 +60,7 @@
                                                                                                     \
 		q->wrk[cb] = *w;                                                                    \
 		__sync_synchronize();                                                               \
-		if (__sync_bool_compare_and_swap(&q->bottom, cb, cb + 1) == false) assert(1);       \
+		if (__sync_bool_compare_and_swap(&q->bottom, cb, cb + 1) == false) assert(0);       \
                                                                                                     \
 		return 0;                                                                           \
 	}                                                                                           \

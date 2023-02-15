@@ -10,7 +10,7 @@ declare project_path="$(
 path=`pwd`
 echo $project_path
 cd $project_path/runtime/bin
-export SLEDGE_SCHEDULER=EDF
+export SLEDGE_SCHEDULER=FIFO
 #export SLEDGE_DISABLE_PREEMPTION=true
 #export SLEDGE_SANDBOX_PERF_LOG=$path/srsf.log
 export SLEDGE_NWORKERS=24
