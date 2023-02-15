@@ -20,8 +20,8 @@ do
 		server_log="server-"${cores_list[i]}".log"
        		sudo ./no_hyperthread.sh > yves
        		echo "sledge start with worker core ${cores_list[i]}"
-		./start.sh ${cores_list[i]}
-#		./start.sh ${cores_list[i]} > $server_log 2>&1 &
+#		./start.sh ${cores_list[i]}
+		./start.sh ${cores_list[i]} > $server_log 2>&1 &
 		sleep 8 
 		curl -H 'Expect:' -H "Content-Type: application/json" --data-binary "0 ${rate[r]} 15" "http://localhost:10030/fib"
 		echo fib
