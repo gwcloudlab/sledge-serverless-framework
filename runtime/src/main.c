@@ -46,6 +46,8 @@ pid_t    runtime_pid = 0;
 thread_local int thread_id = -1;
 bool first_request_comming = false;
 
+
+
 /**
  * Returns instructions on use of CLI if used incorrectly
  * @param cmd - The command the user entered
@@ -70,7 +72,10 @@ runtime_allocate_available_cores()
 	pretty_print_key_value("Core Count (Online)", "%u\n", runtime_total_online_processors);
 
 	/* If more than two cores are available, leave core 0 free to run OS tasks */
-	if (runtime_total_online_processors > 2) {
+	if (runtime_total_online_processors > 3) {
+               	runtime_first_worker_processor = 4;
+               	max_possible_workers           = runtime_total_online_processors - 4;
+       	} else if (runtime_total_online_processors == 3) {
 		runtime_first_worker_processor = 2;
 		max_possible_workers           = runtime_total_online_processors - 2;
 	} else if (runtime_total_online_processors == 2) {
@@ -175,6 +180,7 @@ runtime_start_runtime_worker_threads()
 		CPU_ZERO(&cs);
 		CPU_SET(runtime_first_worker_processor + i, &cs);
 		ret = pthread_setaffinity_np(runtime_worker_threads[i], sizeof(cs), &cs);
+		printf("worker %d on cpu %d\n", i, runtime_first_worker_processor + i);
 		assert(ret == 0);
 	}
 }

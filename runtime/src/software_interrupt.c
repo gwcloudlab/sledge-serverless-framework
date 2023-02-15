@@ -26,6 +26,8 @@
 #include "software_interrupt.h"
 #include "software_interrupt_counts.h"
 
+
+extern thread_local unsigned long queue_empty;
 #ifdef SANDBOX_STATE_TOTALS
 extern _Atomic uint32_t sandbox_state_totals[SANDBOX_STATE_COUNT];
 #endif
@@ -39,12 +41,19 @@ thread_local _Atomic volatile sig_atomic_t deferred_sigalrm = 0;
 /***************************************
  * Externs
  **************************************/
+extern thread_local uint64_t nb_sandbox_free;
+extern pthread_t generator[1024];
+extern int nb_generator;
+extern thread_local uint64_t nb_sandbox, sandbox_lost, sandbox_added;
 extern thread_local uint32_t total_local_requests;
 extern pthread_t *runtime_worker_threads;
 extern time_t t_start;
 extern thread_local int worker_thread_idx;
-
-
+extern thread_local uint64_t deadline_respected, deadline_expired;
+thread_local bool is_generator = false;
+thread_local uint64_t rss = 0;
+thread_local uint64_t empty_rss = 0, fib_rss = 0;
+thread_local uint64_t nb_empty = 0, nb_fib = 0; 
 /**************************
  * Private Static Inlines *
  *************************/
@@ -94,8 +103,14 @@ sigint_propagate_workers_listener(siginfo_t *signal_info)
 {
         /* Signal was sent directly by the kernel user space, so forward to other threads */
         if (signal_info->si_code == SI_KERNEL || signal_info->si_code == SI_USER) {
-                for (int i = 0; i < runtime_worker_threads_count; i++) {
-                        if (pthread_self() == runtime_worker_threads[i]) continue;
+		for(int i = 0; i < nb_generator; i++) {
+			if ((pthread_self() != generator[i]) && (generator[i] != NULL))	
+				printf("killing Session %d\n", i);
+                        	pthread_kill(generator[i], SIGINT);
+		}
+		for (int i = 0; i < runtime_worker_threads_count; i++) {
+			printf("killing Worker %d\n", i);
+			if (pthread_self() == runtime_worker_threads[i]) continue;
 
                         /* All threads should have been initialized */
                         assert(runtime_worker_threads[i] != 0);
@@ -103,7 +118,8 @@ sigint_propagate_workers_listener(siginfo_t *signal_info)
                 }
                 /* send to listener thread */
                 if (pthread_self() != listener_thread_id) {
-                        pthread_kill(listener_thread_id, SIGINT);
+                        printf("killing Listener\n");
+			pthread_kill(listener_thread_id, SIGINT);
                 }
         } else {
                 /* Signal forwarded from another thread. Just confirm it resulted from pthread_kill */
@@ -222,16 +238,23 @@ software_interrupt_handle_signals(int signal_type, siginfo_t *signal_info, void 
 	}
 	case SIGINT: {
                 /* Stop the alarm timer first */
-                software_interrupt_disarm_timer();
+                //go = false;
+		software_interrupt_disarm_timer();
                 sigint_propagate_workers_listener(signal_info);
                 /* calculate the throughput */
                 time_t t_end = time(NULL);
                 double seconds = difftime(t_end, t_start);
                 //double throughput = atomic_load(&sandbox_state_totals[SANDBOX_COMPLETE]) / seconds;
                 double throughput =  total_local_requests / seconds;
-                uint32_t total_sandboxes_error = atomic_load(&sandbox_state_totals[SANDBOX_ERROR]);
-                printf("throughput is %f error request is %u global total request %d worker %d total requests is %u worker total_held %"PRIu64" longest_held %"PRIu64" listener total_held %"PRIu64" longest_held %"PRIu64"\n", 
-			throughput, total_sandboxes_error, atomic_load(&sandbox_state_totals[SANDBOX_COMPLETE]), worker_thread_idx, total_local_requests, total_held[worker_thread_idx], longest_held[worker_thread_idx], total_held[200], longest_held[200]);
+		uint32_t total_sandboxes_error = atomic_load(&sandbox_state_totals[SANDBOX_ERROR]);
+                //printf("throughput is %f error request is %u global total request %d worker %d total requests is %u worker total_held %"PRIu64" longest_held %"PRIu64" listener total_held %"PRIu64" longest_held %"PRIu64"\n", throughput, total_sandboxes_error, atomic_load(&sandbox_state_totals[SANDBOX_COMPLETE]), worker_thread_idx, total_local_requests, total_held[worker_thread_idx], longest_held[worker_thread_idx], total_held[200], longest_held[200]);
+		//printf("throughput %f sanbox generated %lu added %lu miss %lu - queue empty %lu computed %lu\n", throughput, req_put, req_put - req_miss, req_miss, queue_empty, total_local_requests);
+		if (!is_generator){
+			printf("throughput %f rss %lu total_local_requests %u empty %lu %lu fib %lu %lu\n",throughput , rss, total_local_requests, empty_rss, nb_empty, fib_rss, nb_fib);
+		}else {
+			double sandbox_freq = nb_sandbox / seconds;
+			printf("creation rate %f total %lu added %lu lost %lu\n", sandbox_freq, nb_sandbox, sandbox_added, sandbox_lost);
+		}
 		fflush(stdout);
         	pthread_exit(0);
 	}

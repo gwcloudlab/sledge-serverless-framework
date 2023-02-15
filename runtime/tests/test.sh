@@ -1,38 +1,36 @@
 #!/bin/bash
 
-function usage {
-        echo "$0 [concurrency] [fib number]"
-        exit 1
-}
-
-if [ $# != 2 ] ; then
-        usage
-        exit 1;
-fi
 
 #cores_list=(1 2 4 10 20 40 50 60 77)
 #cores_list=(50 60)
 #cores_list=(1 2 4 6 8 10 20 30 40 50 60 70 77)
-concurrency=$1
-fib_num=$2
 
-echo "fib num is $fib_num"
-cores_list=(1 2 4 6 8 10 12 14 16 18 20 24 28 32 36 40 44 48 52 56 60 64 68 72 77)
-#cores_list=(6 8 12 14 16 18 24 28 32 36 77)
-#cores_list=(77)
+#cores_list=(1 2 4 6 8 10 12 14 16 18 20 24 28)
+cores_list=(24)
+#rate=(10000 25000 50000 100000 200000)
+rate=(10000)
+#cores_list=(20)
+#cores_list=(1 2 4 6 8 10 12 14)
 ulimit -n 1000000
-./kill_sledge.sh
-for(( i=0;i<${#cores_list[@]};i++ )) do
-	hey_log=${cores_list[i]}"-$fib_num-$concurrency.log" #8-38-100
-	loadtest_log=${cores_list[i]}"-$fib_num-$concurrency.log"
-	server_log="server-"${cores_list[i]}"-$fib_num-$concurrency.log"
-	./start.sh ${cores_list[i]} > $server_log 2>&1 & 
-        echo "sledge start with worker core ${cores_list[i]}"
-	taskset --cpu-list 80-159 hey -disable-compression -disable-keepalive -disable-redirects -z "60"s -c "$concurrency" -m POST -d "$fib_num" "http://127.0.0.1:10030/fib" > $hey_log
-	#taskset --cpu-list 80-159 hey -disable-compression -disable-keepalive -disable-redirects -z "60"s -c "$concurrency" "http://127.0.0.1:10030/fib" > $hey_log
-	./kill_sledge.sh
-done
+#./kill_sledge.sh
+for(( r=0;r<${#rate[@]}; r++))
+do
+	echo "experiment rate ${rate[r]}"
+	for(( i=0;i<${#cores_list[@]};i++ )) do
+		server_log="server-"${cores_list[i]}".log"
+       		sudo ./no_hyperthread.sh > yves
+       		echo "sledge start with worker core ${cores_list[i]}"
+		./start.sh ${cores_list[i]}
+#		./start.sh ${cores_list[i]} > $server_log 2>&1 &
+		sleep 8 
+		curl -H 'Expect:' -H "Content-Type: application/json" --data-binary "0 ${rate[r]} 15" "http://localhost:10030/fib"
+		echo fib
+		curl -H 'Expect:' -H "Content-Type: application/json" --data-binary "1 ${rate[r]} 15" "http://localhost:10031/empty"
+		echo empty
+		sleep 50
+		./kill_sledge.sh
+		grep throughput $server_log | wc -l 
+	done
+	#mv server-* "multi_sandbox/fifo/"${rate[r]}
+done	
 
-folder_name="$fib_num""_c$concurrency"
-mkdir $folder_name
-mv *.log $folder_name

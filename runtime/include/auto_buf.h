@@ -26,6 +26,14 @@ auto_buf_flush(struct auto_buf *buf)
 	return fflush(buf->handle);
 }
 
+static inline void auto_buf_copy(struct auto_buf *dest, struct auto_buf *source) {
+	if (dest == NULL || source == NULL) return;
+	
+	fwrite(source->data, 1, source->size, dest->handle);
+	fflush(dest->handle);
+}
+
+
 static inline void
 auto_buf_deinit(struct auto_buf *buf)
 {

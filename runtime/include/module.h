@@ -19,7 +19,6 @@
 #include "wasm_table.h"
 
 extern thread_local int worker_thread_idx;
-
 INIT_POOL(wasm_memory, wasm_memory_free)
 INIT_POOL(wasm_stack, wasm_stack_free)
 

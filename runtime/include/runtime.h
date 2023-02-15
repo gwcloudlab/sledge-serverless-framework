@@ -29,6 +29,10 @@
 #define RUNTIME_RUNQUEUE_SIZE            10240000        /* Minimum guaranteed size. Might grow! */
 #define RUNTIME_TENANT_QUEUE_SIZE        4096
 
+/*** YVES ***/
+extern pthread_t generator[1024]; 
+/*** YVES ***/
+extern uint32_t runtime_total_online_processors;
 enum RUNTIME_SIGALRM_HANDLER
 {
 	RUNTIME_SIGALRM_HANDLER_BROADCAST = 0,

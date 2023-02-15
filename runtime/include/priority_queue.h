@@ -8,7 +8,7 @@
 #include "panic.h"
 #include "runtime.h"
 #include "worker_thread.h"
-
+#include "sandbox_functions.h"
 /**
  * How to get the priority out of the generic element
  * We assume priority is expressed as an unsigned 64-bit integer (i.e. cycles or
@@ -55,6 +55,12 @@ priority_queue_update_highest_priority(struct priority_queue *priority_queue, co
  * @param new_item the value we are adding
  * @return 0 on success. -ENOSPC when priority queue is full
  */
+
+/** SLEDGE GENERATOR **/
+extern struct route *route;
+extern struct http_session *g_session[1024];
+/** SLEDGE GENERATOR **/
+
 static inline int
 priority_queue_append(struct priority_queue *priority_queue, void *new_item)
 {
@@ -100,7 +106,6 @@ priority_queue_percolate_up(struct priority_queue *priority_queue)
 	assert(priority_queue != NULL);
 	assert(priority_queue->get_priority_fn != NULL);
 	assert(!priority_queue->use_lock || lock_is_locked(&priority_queue->lock));
-
 	/* If there's only one element, set memoized lookup and early out */
 	if (priority_queue->size == 1) {
 		priority_queue_update_highest_priority(priority_queue,
@@ -187,7 +192,6 @@ priority_queue_percolate_down(struct priority_queue *priority_queue, int parent_
 		parent_index     = smallest_child_index;
 		left_child_index = 2 * parent_index;
 	}
-
 	/* Update memoized value if we touched the head */
 	if (update_highest_value) {
 		if (!priority_queue_is_empty(priority_queue)) {
@@ -352,11 +356,15 @@ priority_queue_length(struct priority_queue *priority_queue)
 	return size;
 }
 
+
+extern pthread_t generator[1024];
+extern struct route *route;
 /**
  * @param priority_queue - the priority queue we want to add to
  * @param value - the value we want to add
  * @returns 0 on success. -ENOSPC on full.
  */
+
 static inline int
 priority_queue_enqueue_nolock(struct priority_queue *priority_queue, void *value)
 {
@@ -366,7 +374,7 @@ priority_queue_enqueue_nolock(struct priority_queue *priority_queue, void *value
 
 	int rc;
 
-	if (unlikely(priority_queue_append(priority_queue, value) == -ENOSPC)) goto err_enospc;
+	if (unlikely(priority_queue_append(priority_queue, value) == -ENOSPC)) 	goto err_enospc;
 
 	priority_queue_percolate_up(priority_queue);
 

@@ -66,13 +66,14 @@ wasm_memory_alloc(uint64_t initial, uint64_t max)
 
 	int rc = wasm_memory_init(wasm_memory, initial, max);
 	if (rc < 0) {
-		assert(0);
+		//assert(0);
 		wasm_memory_free(wasm_memory);
 		return NULL;
 	}
 
 	return wasm_memory;
 }
+
 
 static INLINE int32_t
 wasm_memory_init(struct wasm_memory *wasm_memory, uint64_t initial, uint64_t max)
@@ -89,8 +90,10 @@ wasm_memory_init(struct wasm_memory *wasm_memory, uint64_t initial, uint64_t max
 
 	/* Allocate buffer of contiguous virtual addresses for full wasm32 linear memory and guard page */
 	wasm_memory->abi.buffer = mmap(NULL, WASM_MEMORY_SIZE_TO_ALLOC, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-	if (wasm_memory->abi.buffer == MAP_FAILED) return -1;
-
+	if (wasm_memory->abi.buffer == MAP_FAILED){
+		printf("MAP FAILED %s\n", strerror(errno));       
+		return -1;
+	}
 	/* Set the initial bytes to read / write */
 	int rc = mprotect(wasm_memory->abi.buffer, initial, PROT_READ | PROT_WRITE);
 	if (rc != 0) {
@@ -111,7 +114,7 @@ wasm_memory_deinit(struct wasm_memory *wasm_memory)
 {
 	assert(wasm_memory != NULL);
 	assert(wasm_memory->abi.buffer != NULL);
-
+	
 	munmap(wasm_memory->abi.buffer, WASM_MEMORY_SIZE_TO_ALLOC);
 	wasm_memory->abi.buffer   = NULL;
 	wasm_memory->abi.size     = 0;

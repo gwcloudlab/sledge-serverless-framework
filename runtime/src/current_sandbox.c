@@ -165,7 +165,6 @@ current_sandbox_fini()
 
 done:
 	sandbox_set_as_returned(sandbox, SANDBOX_RUNNING_SYS);
-
 	/* Cleanup connection and exit sandbox */
 	current_sandbox_exit();
 	assert(0);
@@ -193,6 +192,5 @@ current_sandbox_start(void)
 	} else {
 		current_sandbox_wasm_trap_handler(rc);
 	}
-
 	current_sandbox_fini();
 }

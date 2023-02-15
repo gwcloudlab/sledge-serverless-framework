@@ -14,6 +14,9 @@
 #include "sandbox_state_transition.h"
 #include "sandbox_types.h"
 
+extern thread_local uint64_t total_local_requests, rss, fib_rss, empty_rss;
+extern thread_local uint64_t nb_empty, nb_fib;
+
 /**
  * Transitions a sandbox to the SANDBOX_RETURNED state.
  * This occurs when a sandbox is executing and runs to completion.
@@ -42,6 +45,19 @@ sandbox_set_as_returned(struct sandbox *sandbox, sandbox_state_t last_state)
 	}
 	}
 
+
+	uint64_t rss_tmp = now - sandbox->timestamp_of.allocation;
+	rss += rss_tmp;
+	
+	if (strcmp(sandbox->route->module->path, "empty.wasm.so") == 0) {
+		nb_empty++;
+		empty_rss += rss_tmp;
+	}
+	else {
+		nb_fib++;
+		fib_rss += rss_tmp;
+	}
+	total_local_requests++;
 	/* State Change Bookkeeping */
 	assert(now >= sandbox->timestamp_of.last_state_change);
 	sandbox->last_state_duration = now - sandbox->timestamp_of.last_state_change;
@@ -50,12 +66,11 @@ sandbox_set_as_returned(struct sandbox *sandbox, sandbox_state_t last_state)
 	sandbox_state_history_append(&sandbox->state_history, SANDBOX_RETURNED);
 	sandbox_state_totals_increment(SANDBOX_RETURNED);
 	sandbox_state_totals_decrement(last_state);
-
-	http_session_set_response_header(sandbox->http, 200);
+//	printf("sandbox return %s %s\n", sandbox->http->route->module->path, sandbox->http->http_request.body);
+//	http_session_set_response_header(sandbox->http, 200);
 	sandbox->http->state = HTTP_SESSION_EXECUTION_COMPLETE;
-	http_session_send_response(sandbox->http, (void_star_cb)listener_thread_register_http_session);
+//	http_session_send_response(sandbox->http, (void_star_cb)listener_thread_register_http_session);
 	sandbox->http = NULL;
-
 	/* State Change Hooks */
 	sandbox_state_transition_from_hook(sandbox, last_state);
 	sandbox_state_transition_to_hook(sandbox, SANDBOX_RETURNED);

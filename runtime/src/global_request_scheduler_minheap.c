@@ -7,7 +7,7 @@
 #include "priority_queue.h"
 #include "runtime.h"
 
-static struct priority_queue *global_request_scheduler_minheap;
+static struct priority_queue *global_request_scheduler_minheap = NULL;
 
 /**
  * Pushes a sandbox to the global deque
@@ -19,8 +19,9 @@ global_request_scheduler_minheap_add(struct sandbox *sandbox)
 {
 	assert(sandbox);
 	assert(global_request_scheduler_minheap);
-	if (unlikely(!listener_thread_is_running())) panic("%s is only callable by the listener thread\n", __func__);
 
+	if (global_request_scheduler_minheap->size >= global_request_scheduler_minheap->capacity)
+		return NULL;
 	int return_code = priority_queue_enqueue(global_request_scheduler_minheap, sandbox);
 
 	if (return_code != 0) return NULL;

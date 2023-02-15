@@ -1,6 +1,6 @@
 [
         {
-                "name": "gwu",
+                "name": "fib",
                 "port": 10030,
                 "replenishment-period-us": 0,
                 "max-budget-us": 0,
@@ -14,6 +14,22 @@
                                 "http-resp-content-type": "text/plain"
                         }
                 ]
-        }
+        },
+        {
+                "name": "empty",
+                "port": 10031,
+                "replenishment-period-us": 0,
+                "max-budget-us": 0,
+                "routes": [
+                        {
+                                "route": "/empty",
+                                "path": "empty.wasm.so",
+                                "admissions-percentile": 70,
+                                "expected-execution-us": 400,
+                                "relative-deadline-us": 1600,
+                                "http-resp-content-type": "text/plain"
+                        }
+                ]
+	}
 ]
 

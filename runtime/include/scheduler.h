@@ -63,6 +63,9 @@
  * initialize a sandbox.
  */
 
+extern thread_local unsigned long queue_empty;
+extern bool first_request_comming;
+extern char *structure; 
 static inline struct sandbox *
 scheduler_mtdbf_get_next()
 {
@@ -106,27 +109,15 @@ done:
 	return local_runqueue_get_next();
 }
 
+/*
 static inline struct sandbox *
 scheduler_edf_get_next()
 {
-	/* Get the deadline of the sandbox at the head of the local queue */
 	struct sandbox *local          = local_runqueue_get_next();
 	uint64_t        local_deadline = local == NULL ? UINT64_MAX : local->absolute_deadline;
 	struct sandbox *global         = NULL;
 
-	//uint64_t global_deadline = global_request_scheduler_peek();
 
-	/* Try to pull and allocate from the global queue if earlier
-	 * This will be placed at the head of the local runqueue */
-	/*if (global_deadline < local_deadline) {
-		if (global_request_scheduler_remove_if_earlier(&global, local_deadline) == 0) {
-			assert(global != NULL);
-			assert(global->absolute_deadline < local_deadline);
-			sandbox_prepare_execution_environment(global);
-			assert(global->state == SANDBOX_INITIALIZED);
-			sandbox_set_as_runnable(global, SANDBOX_INITIALIZED);
-		}
-	}*/
 	if (local != NULL) {
 		if (local->state == SANDBOX_INITIALIZED) {
 			sandbox_prepare_execution_environment(local);
@@ -134,9 +125,33 @@ scheduler_edf_get_next()
 			sandbox_set_as_runnable(local, SANDBOX_INITIALIZED);
 		}
 	}
-	/* Return what is at the head of the local runqueue or NULL if empty */
 	return local;
 }
+*/
+
+
+
+
+static inline struct sandbox *
+scheduler_edf_get_next()
+{
+	struct sandbox *local          = local_runqueue_get_next();
+	uint64_t        local_deadline = local == NULL ? UINT64_MAX : local->absolute_deadline;
+	struct sandbox *global         = NULL;
+	uint64_t global_deadline = global_request_scheduler_peek();
+	if (global_deadline < local_deadline) {
+		if (global_request_scheduler_remove_if_earlier(&global, local_deadline) == 0) {
+			assert(global != NULL);
+			assert(global->absolute_deadline < local_deadline);
+			sandbox_prepare_execution_environment(global);
+			assert(global->state == SANDBOX_INITIALIZED);
+			sandbox_set_as_runnable(global, SANDBOX_INITIALIZED);
+		}
+	}
+	
+	return local_runqueue_get_next();
+}
+
 
 static inline struct sandbox *
 scheduler_fifo_get_next()
@@ -144,7 +159,6 @@ scheduler_fifo_get_next()
 	struct sandbox *local = local_runqueue_get_next();
 
 	struct sandbox *global = NULL;
-
 	if (local == NULL) {
 		/* If the local runqueue is empty, pull from global request scheduler */
 		if (global_request_scheduler_remove(&global) < 0) goto done;
@@ -306,6 +320,8 @@ scheduler_process_policy_specific_updates_on_interrupts(struct sandbox *interrup
 	}
 }
 
+
+
 /**
  * Called by the SIGALRM handler after a quantum
  * Assumes the caller validates that there is something to preempt
@@ -316,6 +332,7 @@ static inline void
 scheduler_preemptive_sched(ucontext_t *interrupted_context)
 {
 	assert(interrupted_context != NULL);
+//	printf("scheduler_preemptive_sched 1 %lx\n",runtime_worker_threads[worker_thread_idx]);
 
 	/* Process epoll to make sure that all runnable jobs are considered for execution */
 
@@ -326,6 +343,7 @@ scheduler_preemptive_sched(ucontext_t *interrupted_context)
 	scheduler_process_policy_specific_updates_on_interrupts(interrupted_sandbox);
 
 	struct sandbox *next = scheduler_get_next();
+//	printf("scheduler_preemptive_sched 2 %lx\n", runtime_worker_threads[worker_thread_idx]);
 	/* Assumption: the current sandbox is on the runqueue, so the scheduler should always return something */
 	assert(next != NULL);
 
@@ -428,7 +446,7 @@ scheduler_cooperative_sched(bool add_to_cleanup_queue)
 {
 	struct sandbox *exiting_sandbox = current_sandbox_get();
 	assert(exiting_sandbox != NULL);
-
+	
 	/* Clearing current sandbox indicates we are entering the cooperative scheduler */
 	current_sandbox_set(NULL);
 	barrier();

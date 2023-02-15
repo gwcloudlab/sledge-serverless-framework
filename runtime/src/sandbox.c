@@ -16,7 +16,7 @@
 #include "wasm_stack.h"
 
 _Atomic uint64_t sandbox_total = 0;
-
+thread_local uint64_t nb_sandbox_free = 0;
 static inline void
 sandbox_log_allocation(struct sandbox *sandbox)
 {
@@ -103,18 +103,22 @@ sandbox_prepare_execution_environment(struct sandbox *sandbox)
 	rc = sandbox_allocate_globals(sandbox);
 	if (rc < 0) {
 		error_message = "failed to allocate globals";
+		printf("%s\n", error_message);
 		goto err_globals_allocation_failed;
 	}
 
 	/* Allocate linear memory in a 4GB address space */
 	if (sandbox_allocate_linear_memory(sandbox)) {
 		error_message = "failed to allocate sandbox linear memory";
+		printf("%s\n", error_message);
 		goto err_memory_allocation_failed;
 	}
+
 
 	/* Allocate the Stack */
 	if (sandbox_allocate_stack(sandbox) < 0) {
 		error_message = "failed to allocate sandbox stack";
+		printf("%s\n", error_message);
 		goto err_stack_allocation_failed;
 	}
 
@@ -184,9 +188,9 @@ sandbox_alloc(struct module *module, struct http_session *session, struct route 
 	assert(size_to_alloc % alignment == 0);
 
 	struct sandbox *sandbox = NULL;
-	sandbox                 = aligned_alloc(alignment, size_to_alloc);
-
-	if (unlikely(sandbox == NULL)) return NULL;
+sandbox                 = aligned_alloc(alignment, size_to_alloc);
+	
+if (unlikely(sandbox == NULL)) return NULL;
 	memset(sandbox, 0, size_to_alloc);
 
 	sandbox_set_as_allocated(sandbox);
@@ -229,4 +233,5 @@ sandbox_free(struct sandbox *sandbox)
 
 	sandbox_deinit(sandbox);
 	free(sandbox);
+	nb_sandbox_free++;
 }

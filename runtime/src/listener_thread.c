@@ -14,12 +14,32 @@
 #include "http_session_perf_log.h"
 #include "sandbox_set_as_runnable.h"
 
+/** SLEDGE GENERATOR **/
+#include <stdlib.h>
+#include <math.h>
+#include "local_runqueue.h"
+#define NB_WORKER 10
+int nb_generator = 0;
+extern thread_local bool is_generator;
+thread_local uint64_t nb_sandbox = 0;
+thread_local uint64_t sandbox_added = 0;
+thread_local uint64_t sandbox_lost = 0;
+struct priority_queue* worker_queues[1024];
+struct http_session *g_session[1024];
+thread_local http_session *local_session = NULL;
+bool change[1024];
+int rate[1024];
+int input[1024];
+pthread_t generator[1024];
+cpu_set_t cs[1024];
+int first_runtime_generator = 2;
+/** SLEDGE GENERATOR **/
+
 extern thread_local int thread_id;
 extern bool first_request_comming;
 time_t t_start;
-struct priority_queue* worker_queues[1024];
 extern uint32_t runtime_worker_threads_count;
-int rr_index = 0;
+thread_local int rr_index = 0;
 static void listener_thread_unregister_http_session(struct http_session *http);
 static void panic_on_epoll_error(struct epoll_event *evt);
 
@@ -31,6 +51,8 @@ static void on_client_request_received(struct http_session *session);
 static void on_client_response_header_sending(struct http_session *session);
 static void on_client_response_body_sending(struct http_session *session);
 static void on_client_response_sent(struct http_session *session);
+
+struct auto_buf yves_request;
 
 /*
  * Descriptor of the epoll instance used to monitor the socket descriptors of registered
@@ -197,11 +219,6 @@ on_client_request_arrival(int client_socket, const struct sockaddr *client_addre
 static void
 on_client_request_receiving(struct http_session *session)
 {
-	if (first_request_comming == false){
-               t_start = time(NULL);
-                first_request_comming = true;
-        }
-
 	/* Read HTTP request */
 	int rc = http_session_receive_request(session, (void_star_cb)listener_thread_register_http_session);
 	if (likely(rc == 0)) {
@@ -221,13 +238,65 @@ on_client_request_receiving(struct http_session *session)
 	assert(0);
 }
 
+double ran_expo(double lambda){
+    double u;
+
+    u = rand() / (RAND_MAX + 1.0);
+
+    return -log(1- u) / lambda;
+}
+	
+noreturn void*
+generator_main(int idx)
+{       
+	uint64_t begin, end;
+	is_generator = true;
+        printf("generator coucou %d starts\n", idx);
+        pthread_setschedprio(pthread_self(), -20);
+	local_session = NULL; //http_session_alloc(g_session[idx]->socket, (const struct sockaddr *)&(g_session[idx]->client_address),
+  //                                                    g_session[idx]->tenant, g_session[idx]->request_arrival_timestamp);
+	software_interrupt_unmask_signal(SIGINT);
+	int i = 10000000;
+	while (true) {
+		if (change[idx]) {
+			if (local_session != NULL)
+				http_session_free(local_session);
+			local_session = http_session_alloc(g_session[idx]->socket, (const struct sockaddr *)&(g_session[idx]->client_address),
+                                                          g_session[idx]->tenant, g_session[idx]->request_arrival_timestamp);
+			http_session_copy(local_session, g_session[idx]);	
+			change[idx] = false;
+		}
+		struct sandbox *sandbox = sandbox_alloc(local_session->route->module, local_session, local_session->route, local_session->tenant, 1);
+		nb_sandbox++;
+		if (sandbox && global_request_scheduler_add(sandbox) == NULL) {
+			sandbox_lost++;
+			sandbox->http = NULL;
+                        sandbox->state = SANDBOX_COMPLETE;
+                        sandbox_free(sandbox);
+		}else { 
+			sandbox_added++;
+		}
+		int cycles = ran_expo(1.0/rate[idx]); 
+		begin = __getcycles();
+        	end = begin;
+        	while(end - begin < cycles) {
+                	end = __getcycles();
+		}
+		i--;
+	}
+
+}
+
+
+struct route *route = NULL;
+uint64_t work_admitted = 0;
 static void
 on_client_request_received(struct http_session *session)
 {
 	assert(session->state == HTTP_SESSION_RECEIVED_REQUEST);
 	session->request_downloaded_timestamp = __getcycles();
 
-	struct route *route = http_router_match_route(&session->tenant->router, session->http_request.full_url);
+	route = http_router_match_route(&session->tenant->router, session->http_request.full_url);
 	if (route == NULL) {
 		debuglog("Did not match any routes\n");
 		session->state = HTTP_SESSION_EXECUTION_COMPLETE;
@@ -237,13 +306,12 @@ on_client_request_received(struct http_session *session)
 	}
 
 	session->route = route;
-
 	/*
 	 * Perform admissions control.
 	 * If 0, workload was rejected, so close with 429 "Too Many Requests" and continue
 	 * TODO: Consider providing a Retry-After header
 	 */
-	uint64_t work_admitted = admissions_control_decide(route->admissions_info.estimate);
+	work_admitted = admissions_control_decide(route->admissions_info.estimate);
 	if (work_admitted == 0) {
 		session->state = HTTP_SESSION_EXECUTION_COMPLETE;
 		http_session_set_response_header(session, 429);
@@ -251,36 +319,65 @@ on_client_request_received(struct http_session *session)
 		return;
 	}
 
-	/* Allocate a Sandbox */
 	session->state          = HTTP_SESSION_EXECUTING;
-	struct sandbox *sandbox = sandbox_alloc(route->module, session, route, session->tenant, work_admitted);
-	if (unlikely(sandbox == NULL)) {
-		debuglog("Failed to allocate sandbox\n");
-		session->state = HTTP_SESSION_EXECUTION_COMPLETE;
-		http_session_set_response_header(session, 500);
-		on_client_response_header_sending(session);
-		return;
+
+	
+	session->state = HTTP_SESSION_EXECUTION_COMPLETE;
+
+	bool new_thread = false;
+
+	/* Request Pqrsing */
+	char *req_body = strdup(session->http_request.body);
+        int idx_gen = nb_generator;
+	int tmp = atoi(strtok(req_body, " "));
+	nb_generator++;
+	rate[idx_gen] = atoi(strtok(NULL, " "));
+	input[idx_gen] = atoi(strtok(NULL, " "));
+	int shift;
+	printf("idx %d rate %d input %d\n", idx_gen, rate[idx_gen], input[idx_gen]);
+
+	/*HTTP Session set up */
+       	if (g_session[idx_gen] == NULL) 
+		new_thread = true;	
+	if (g_session[idx_gen] != NULL)
+		http_session_free(g_session[idx_gen]);
+	g_session[idx_gen] = http_session_alloc(session->socket, (const struct sockaddr *)&(session->client_address),
+                                                        session->tenant, session->request_arrival_timestamp);
+	http_session_copy(g_session[idx_gen], session);
+	
+	/*HTTP Session Body update */
+	if(rate[idx_gen] < 100000)
+		shift = 6;
+	else 
+		shift = 7;
+
+	if (idx_gen < 10)
+		shift += 2;
+	else
+		shift += 3;
+
+	g_session[idx_gen]->http_request.body += shift;
+	g_session[idx_gen]->http_request.body_length -= shift;
+	
+	/* Response to CLient */
+	http_session_set_response_header(session, 200);
+	on_client_response_header_sending(session);
+	for (int i = 0; i < 1024; i++) {
+		if (g_session[i] == NULL) continue;
+		printf("session %d: %s %s\n",i, g_session[i]->http_request.body, g_session[idx_gen]->route->module->path);
 	}
 
-	/* If the global request scheduler is full, return a 429 to the client */
-	/*if (unlikely(global_request_scheduler_add(sandbox) == NULL)) {
-		debuglog("Failed to add sandbox to global queue\n");
-		sandbox_free(sandbox);
-		session->state = HTTP_SESSION_EXECUTION_COMPLETE;
-		http_session_set_response_header(session, 429);
-		on_client_response_header_sending(session);
-	}*/
-
-	if (rr_index == runtime_worker_threads_count) {
-		rr_index = 0;
+	/* Generator Thread Creation */
+	change[idx_gen] = true;
+	if (new_thread) {
+		CPU_ZERO(&cs[idx_gen]);
+       		CPU_SET(first_runtime_generator, &cs[idx_gen]);
+		first_runtime_generator++;
+               	pthread_create(&generator[idx_gen], NULL, generator_main, idx_gen);
+               	int pin_ret = pthread_setaffinity_np(generator[idx_gen], sizeof(cs[idx_gen]), &cs[idx_gen]);
 	}
-	//struct timeval t_start,t_end;
-	//gettimeofday(&t_start, NULL);
-        local_runqueue_add_index(rr_index, sandbox);
-	//gettimeofday(&t_end, NULL);
-	//long cost = t_end.tv_sec * 1000000 + t_end.tv_usec - t_start.tv_sec * 1000000 - t_start.tv_usec; 
-	//printf("%ld ", cost);
-	rr_index++;
+	if (nb_generator == 2)
+		t_start = time(NULL);
 }
 
 static void
@@ -327,8 +424,8 @@ on_client_response_sent(struct http_session *session)
 	session->response_sent_timestamp = __getcycles();
 	http_session_perf_log_print_entry(session);
 
-	http_session_close(session);
-	http_session_free(session);
+//	http_session_close(session);
+//	http_session_free(session);
 	return;
 }
 
@@ -336,7 +433,6 @@ static void
 on_tenant_socket_epoll_event(struct epoll_event *evt)
 {
 	assert((evt->events & EPOLLIN) == EPOLLIN);
-
 	struct tenant *tenant = evt->data.ptr;
 	assert(tenant);
 
@@ -420,6 +516,7 @@ on_client_socket_epoll_event(struct epoll_event *evt)
  * listener_thread_epoll_file_descriptor - the epoll file descriptor
  *
  */
+thread_local static struct priority_queue *global_request_scheduler_minheap;
 noreturn void *
 listener_thread_main(void *dummy)
 {
@@ -429,10 +526,14 @@ listener_thread_main(void *dummy)
 	metrics_server_init();
 	listener_thread_register_metrics_server();
 
-	/* Set my priority */
-	// runtime_set_pthread_prio(pthread_self(), 2);
-	pthread_setschedprio(pthread_self(), -20);
-
+	for (int i = 0; i < 1024; i++) {
+		generator[i] = NULL;
+		rate[i] = -1;
+		change[i] = false;
+		input[i] = -1;
+		g_session[i] = NULL;
+	}
+	
 	while (true) {
 		/* Block indefinitely on the epoll file descriptor, waiting on up to a max number of events */
 		int descriptor_count = epoll_wait(listener_thread_epoll_file_descriptor, epoll_events,

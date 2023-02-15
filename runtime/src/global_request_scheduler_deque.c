@@ -18,9 +18,7 @@ static struct sandbox *
 global_request_scheduler_deque_add(struct sandbox *sandbox)
 {
 	int return_code = 1;
-
 	return_code = deque_push_sandbox(global_request_scheduler_deque, &sandbox);
-
 	if (return_code != 0) return NULL;
 	return sandbox;
 }

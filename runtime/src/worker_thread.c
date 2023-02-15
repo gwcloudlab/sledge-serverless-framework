@@ -17,7 +17,6 @@
 #include "worker_thread.h"
 #include "tenant_functions.h"
 #include "priority_queue.h"
-
 extern thread_local int thread_id;
 /***************************
  * Worker Thread State     *
@@ -34,7 +33,7 @@ thread_local struct priority_queue *worker_thread_timeout_queue;
 /***********************
  * Worker Thread Logic *
  **********************/
-
+thread_local unsigned long queue_empty = 0;
 /**
  * The entry function for sandbox worker threads
  * Initializes thread-local state, unmasks signals, sets up epoll loop and

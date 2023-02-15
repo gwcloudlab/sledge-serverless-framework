@@ -61,6 +61,26 @@ struct http_session {
 
 extern void http_session_perf_log_print_entry(struct http_session *http_session);
 
+
+
+static inline void http_session_copy(struct http_session *dest, struct http_session *source) {
+	if (dest == NULL || source == NULL) return;
+	dest->tag = source->tag;
+	http_request_copy(&dest->http_request, &source->http_request);
+	auto_buf_copy(&dest->request_buffer, &source->request_buffer);
+	auto_buf_copy(&dest->response_header, &source->response_header);
+	dest->response_header_written = source->response_header_written;
+	auto_buf_copy(&dest->response_body, &source->response_body);
+	dest->response_body_written = source->response_body_written;
+	dest->route = source->route;
+
+}
+
+
+
+
+
+
 /**
  * Initalize state associated with an http parser
  * Because the http_parser structure uses pointers to the request buffer, if realloc moves the request
@@ -152,7 +172,6 @@ static inline void
 http_session_deinit(struct http_session *session)
 {
 	assert(session);
-
 	auto_buf_deinit(&session->request_buffer);
 	auto_buf_deinit(&session->response_header);
 	auto_buf_deinit(&session->response_body);
@@ -162,7 +181,6 @@ static inline void
 http_session_free(struct http_session *session)
 {
 	assert(session);
-
 	http_session_deinit(session);
 	free(session);
 }
@@ -178,10 +196,8 @@ http_session_set_response_header(struct http_session *session, int status_code)
 	assert(session != NULL);
 	assert(status_code >= 200 && status_code <= 599);
 	//http_total_increment_response(status_code);
-
 	/* We might not have actually matched a route */
 	if (likely(session->route != NULL)) { http_route_total_increment(&session->route->metrics, status_code); }
-
 	int rc = fputs(http_header_build(status_code), session->response_header.handle);
 	assert(rc != EOF);
 

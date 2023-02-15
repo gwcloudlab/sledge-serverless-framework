@@ -52,7 +52,6 @@ void
 local_runqueue_delete(struct sandbox *sandbox)
 {
 	assert(local_runqueue.delete_fn != NULL);
-	total_local_requests++;
 #ifdef LOG_LOCAL_RUNQUEUE
 	local_runqueue_count--;
 #endif
