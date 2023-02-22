@@ -36,7 +36,7 @@ Runtime Environment:
 	Sandbox Performance Log       [1;31mDisabled[0m
 	HTTP Session Performance Log  [1;31mDisabled[0m
 Starting listener thread
-	Listener core thread: 7f091c4b8000
+	Listener core thread: 7f6a7fddf000
 Starting 24 worker thread(s)
 worker 0 on cpu 4
 worker 1 on cpu 5
@@ -62,11 +62,11 @@ worker 20 on cpu 24
 worker 21 on cpu 25
 worker 22 on cpu 26
 worker 23 on cpu 27
-idx 0 rate 100000 input 15
-session 0: 15 fibonacci.wasm.so
+idx 0 rate 100000 input 25
+session 0: 25 fibonacci.wasm.so
 generator coucou 0 starts
 idx 1 rate 100000 input 15
-session 0: 15 empty.wasm.so
+session 0: 25 empty.wasm.so
 session 1: 15 empty.wasm.so
 generator coucou 1 starts
 killing Session 0
@@ -84,41 +84,42 @@ killing Worker 9
 killing Worker 10
 killing Worker 11
 killing Worker 12
-throughput 1100.860000 rss 1135521942 total_local_requests 55043 empty 484680338 23951 fib 650841604 31092 = 55043
-throughput 1229.920000 rss 1240523034 total_local_requests 61496 empty 501175712 25978 fib 739347322 35518 = 61496
-throughput 1209.680000 rss 1228099042 total_local_requests 60484 empty 513995108 26436 fib 714103934 34048 = 60484
-throughput 2081.600000 rss 2062535990 total_local_requests 104080 empty 1024788434 55384 fib 1037747556 48696 = 104080
-throughput 2201.860000 rss 2158222168 total_local_requests 110093 empty 1099057488 59709 fib 1059164680 50384 = 110092
-throughput 1231.720000 rss 1246511154 total_local_requests 61586 empty 518693342 26450 fib 727817812 35136 = 61586
 killing Worker 13
-throughput 1254.920000 rss 1262023752 total_local_requests 62746 empty 528113770 27043 fib 733909982 35703 = 62746
-throughput 2096.020000 rss 2082101406 total_local_requests 104801 empty 1029875670 55672 fib 1052225736 49129 = 104801
-throughput 2209.880000 rss 2185673868 total_local_requests 110494 empty 1118851006 59880 fib 1066822862 50614 = 110494
-throughput 1241.220000 rss 1268168164 total_local_requests 62061 empty 522529064 26294 fib 745639100 35767 = 62061
-throughput 2149.880000 rss 2148713980 total_local_requests 107494 empty 1087722586 58299 fib 1060991394 49195 = 107494
-throughput 2151.000000 rss 2129897178 total_local_requests 107550 empty 1068483704 58065 fib 1061413474 49485 = 107550
-throughput 2129.720000 rss 2112334418 total_local_requests 106486 empty 1070716940 57843 fib 1041617478 48643 = 106486
-creation rate 20337.340000 total 1016867 added 1016867 lost 0
-creation rate 20293.980000 total 1014699 added 1014699 lost 0
 killing Worker 14
+throughput 1309.420000 rss 3344760730 total_local_requests 65471 empty 1821073668 34939 fib 1523687062 30532
+throughput 1314.980000 rss 3360067384 total_local_requests 65749 empty 1822047742 35321 fib 1538019642 30428
+throughput 1322.560000 rss 3396223854 total_local_requests 66128 empty 1465421070 30585 fib 1930802784 35543
 killing Worker 15
+throughput 1320.420000 rss 3366203800 total_local_requests 66021 empty 1814197938 35255 fib 1552005862 30766
+throughput 1331.060000 rss 3430481186 total_local_requests 66553 empty 1473875814 30693 fib 1956605372 35860
+throughput 1311.160000 rss 3361770610 total_local_requests 65558 empty 1472929100 30625 fib 1888841510 34933
+throughput 1317.460000 rss 3355321024 total_local_requests 65873 empty 1809690114 35621 fib 1545630910 30252
+creation rate 15885.040000 total 794252 added 794251 lost 0
+throughput 1312.500000 rss 3372727482 total_local_requests 65625 empty 1448983826 30297 fib 1923743656 35328
+throughput 1311.400000 rss 3312784222 total_local_requests 65570 empty 1793624806 35226 fib 1519159416 30344
 killing Worker 16
-throughput 1260.780000 rss 1280712234 total_local_requests 63039 empty 523557360 26616 fib 757154874 36423 = 63039
-throughput 1168.840000 rss 1172473000 total_local_requests 58442 empty 493535134 25447 fib 678937866 32995 = 58442
+throughput 1313.840000 rss 3332328050 total_local_requests 65692 empty 1800316416 35238 fib 1532011634 30454
+throughput 1304.120000 rss 3277728362 total_local_requests 65206 empty 1765209492 35050 fib 1512518870 30156
+throughput 1334.780000 rss 3463938326 total_local_requests 66739 empty 1487252690 30672 fib 1976685636 36067
+throughput 1334.900000 rss 3397113940 total_local_requests 66745 empty 1464761506 30793 fib 1932352434 35952
+throughput 1329.240000 rss 3443118738 total_local_requests 66462 empty 1481530862 30467 fib 1961587876 35995
+throughput 1317.900000 rss 3311813332 total_local_requests 65895 empty 1801023892 35368 fib 1510789440 30527
+throughput 1316.380000 rss 3389736650 total_local_requests 65819 empty 1442900444 30066 fib 1946836206 35753
+creation rate 15782.560000 total 789128 added 789128 lost 0
 killing Worker 17
-throughput 2123.500000 rss 2133560234 total_local_requests 106175 empty 1074690394 57122 fib 1058869840 49053 = 106175
 killing Worker 18
-throughput 2182.560000 rss 2161741872 total_local_requests 109128 empty 1103872284 59618 fib 1057869588 49510 = 109128
-throughput 1227.280000 rss 1258443296 total_local_requests 61364 empty 509754450 25643 fib 748688846 35721 = 61364
+throughput 1313.360000 rss 3389338766 total_local_requests 65668 empty 1477812644 30419 fib 1911526122 35249
+throughput 1303.140000 rss 3309446856 total_local_requests 65157 empty 1795467958 34807 fib 1513978898 30350
 killing Worker 19
 killing Worker 20
+throughput 1338.940000 rss 3424255706 total_local_requests 66947 empty 1478585802 30842 fib 1945669904 36105
+throughput 1318.120000 rss 3382757070 total_local_requests 65906 empty 1836893834 35318 fib 1545863236 30588
 killing Worker 21
-throughput 2146.520000 rss 2106096810 total_local_requests 107326 empty 1076957798 58627 fib 1029139012 48699 = 107326
-throughput 1262.100000 rss 1277828614 total_local_requests 63105 empty 531600678 27448 fib 746227936 35657 = 63105
 killing Worker 22
-throughput 2166.100000 rss 2144659164 total_local_requests 108305 empty 1081547460 58452 fib 1063111704 49853 = 108305
-throughput 1231.940000 rss 1259530370 total_local_requests 61597 empty 517659698 26266 fib 741870672 35331 = 61597
 killing Worker 23
-throughput 2146.660000 rss 2110726722 total_local_requests 107333 empty 1070279222 58648 fib 1040447500 48685 = 107333
+throughput 1353.560000 rss 3490716230 total_local_requests 67678 empty 1488521932 30925 fib 2002194298 36753
+throughput 1337.580000 rss 3430734878 total_local_requests 66879 empty 1482990660 31023 fib 1947744218 35856
 killing Listener
-throughput 1167.400000 rss 1189529516 total_local_requests 58370 empty 500286848 25318 fib 689242668 33052 = 58370
+throughput 1305.140000 rss 3339957262 total_local_requests 65257 empty 1774573144 34862 fib 1565384118 30395
+throughput 1295.640000 rss 3332760344 total_local_requests 64782 empty 1821719420 34716 fib 1511040924 30066
+./start.sh: line 39: 1083979 Segmentation fault      LD_LIBRARY_PATH="$(pwd):$LD_LIBRARY_PATH" ./sledgert ../tests/fib.json

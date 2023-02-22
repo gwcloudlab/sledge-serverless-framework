@@ -36,17 +36,17 @@ Runtime Environment:
 	Sandbox Performance Log       [1;31mDisabled[0m
 	HTTP Session Performance Log  [1;31mDisabled[0m
 Starting listener thread
-	Listener core thread: 7fcd9c871000
+	Listener core thread: 7fa8c481f000
 Starting 4 worker thread(s)
 worker 0 on cpu 4
 worker 1 on cpu 5
 worker 2 on cpu 6
 worker 3 on cpu 7
-idx 0 rate 10000 input 15
-session 0: 15 fibonacci.wasm.so
+idx 0 rate 10000 input 25
+session 0: 25 fibonacci.wasm.so
 generator coucou 0 starts
 idx 1 rate 10000 input 15
-session 0: 15 empty.wasm.so
+session 0: 25 empty.wasm.so
 session 1: 15 empty.wasm.so
 generator coucou 1 starts
 killing Session 0
@@ -56,10 +56,10 @@ killing Worker 1
 killing Worker 2
 killing Worker 3
 killing Listener
-throughput 35120.672131 rss 127647642513042 total_local_requests 2142361 empty 52523418963542 1075687 fib 75124223549500 1066674
-throughput 35343.459016 rss 128431905186100 total_local_requests 2155951 empty 52927548876666 1083927 fib 75504356309434 1072024
-throughput 35681.196721 rss 129685811714280 total_local_requests 2176553 empty 53390490542954 1093346 fib 76295321171326 1083207
-throughput 35524.573770 rss 129154778764828 total_local_requests 2166999 empty 53176813836244 1088576 fib 75977964928584 1078423
-creation rate 157759.098361 total 9623305 added 4343226 lost 5280079
-creation rate 157345.672131 total 9598086 added 4302735 lost 5295351
-./start.sh: line 38: 1112731 Segmentation fault      LD_LIBRARY_PATH="$(pwd):$LD_LIBRARY_PATH" ./sledgert ../tests/fib.json
+throughput 32054.260000 rss 107601426890196 total_local_requests 1602713 empty 45167612662042 801793 fib 62433814228154 800920
+creation rate 150453.740000 total 7522687 added 3202103 lost 4320584
+throughput 31784.120000 rss 106685365561978 total_local_requests 1589206 empty 44828134659850 795745 fib 61857230902128 793461
+throughput 31905.820000 rss 107071320086158 total_local_requests 1595291 empty 45039792637624 799522 fib 62031527448534 795769
+creation rate 149829.780000 total 7491489 added 3193738 lost 4297751
+throughput 32090.700000 rss 107740424866982 total_local_requests 1604535 empty 45267904441452 803280 fib 62472520425530 801255
+./start.sh: line 39: 1023201 Segmentation fault      LD_LIBRARY_PATH="$(pwd):$LD_LIBRARY_PATH" ./sledgert ../tests/fib.json

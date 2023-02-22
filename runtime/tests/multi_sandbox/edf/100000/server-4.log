@@ -36,17 +36,17 @@ Runtime Environment:
 	Sandbox Performance Log       [1;31mDisabled[0m
 	HTTP Session Performance Log  [1;31mDisabled[0m
 Starting listener thread
-	Listener core thread: 7f59fbae1000
+	Listener core thread: 7f7fbcd60000
 Starting 4 worker thread(s)
 worker 0 on cpu 4
 worker 1 on cpu 5
 worker 2 on cpu 6
 worker 3 on cpu 7
-idx 0 rate 100000 input 15
-session 0: 15 fibonacci.wasm.so
+idx 0 rate 100000 input 25
+session 0: 25 fibonacci.wasm.so
 generator coucou 0 starts
 idx 1 rate 100000 input 15
-session 0: 15 empty.wasm.so
+session 0: 25 empty.wasm.so
 session 1: 15 empty.wasm.so
 generator coucou 1 starts
 killing Session 0
@@ -56,9 +56,9 @@ killing Worker 1
 killing Worker 2
 killing Worker 3
 killing Listener
-throughput 10680.516667 rss 12612151208 total_local_requests 640831 empty 7034839680 365004 fib 5577311528 275827
-throughput 9522.833333 rss 11213459280 total_local_requests 571370 empty 4416846946 235718 fib 6796612334 335652
-throughput 10962.683333 rss 12863745044 total_local_requests 657761 empty 7192891520 375449 fib 5670853524 282312
-throughput 9351.633333 rss 11067409602 total_local_requests 561098 empty 4459037258 236825 fib 6608372344 324273
-creation rate 20301.083333 total 1218065 added 1218064 lost 0
-creation rate 20216.600000 total 1212996 added 1212996 lost 0
+throughput 10544.160000 rss 11575112994 total_local_requests 527208 empty 6449698288 305827 fib 5125414706 221381
+throughput 9657.420000 rss 10700913032 total_local_requests 482871 empty 4194345178 204513 fib 6506567854 278358
+throughput 10046.060000 rss 11217385928 total_local_requests 502303 empty 4238894424 205501 fib 6978491504 296802
+throughput 10200.840000 rss 11194898766 total_local_requests 510042 empty 6185573462 293672 fib 5009325304 216370
+creation rate 20190.260000 total 1009513 added 1009513 lost 0
+creation rate 20258.220000 total 1012911 added 1012911 lost 0

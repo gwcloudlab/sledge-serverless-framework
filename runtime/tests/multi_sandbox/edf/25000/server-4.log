@@ -36,17 +36,17 @@ Runtime Environment:
 	Sandbox Performance Log       [1;31mDisabled[0m
 	HTTP Session Performance Log  [1;31mDisabled[0m
 Starting listener thread
-	Listener core thread: 7fd930398000
+	Listener core thread: 7fd636c19000
 Starting 4 worker thread(s)
 worker 0 on cpu 4
 worker 1 on cpu 5
 worker 2 on cpu 6
 worker 3 on cpu 7
-idx 0 rate 25000 input 15
-session 0: 15 fibonacci.wasm.so
+idx 0 rate 25000 input 25
+session 0: 25 fibonacci.wasm.so
 generator coucou 0 starts
 idx 1 rate 25000 input 15
-session 0: 15 empty.wasm.so
+session 0: 25 empty.wasm.so
 session 1: 15 empty.wasm.so
 generator coucou 1 starts
 killing Session 0
@@ -56,10 +56,18 @@ killing Worker 1
 killing Worker 2
 killing Worker 3
 killing Listener
-throughput 35422.400000 rss 116265162993686 total_local_requests 2125344 empty 47104215671516 1066039 fib 69160947322170 1059305
-throughput 35138.316667 rss 115290787774842 total_local_requests 2108299 empty 46701324178582 1057750 fib 68589463596260 1050549
-creation rate 72234.216667 total 4334053 added 4231340 lost 102713
-creation rate 71810.083333 total 4308605 added 4206344 lost 102261
-throughput 35121.366667 rss 115152835599152 total_local_requests 2107282 empty 46641674382462 1055187 fib 68511161216690 1052095
-throughput 34878.716667 rss 114351427199966 total_local_requests 2092723 empty 46411773811812 1050698 fib 67939653388154 1042025
-./start.sh: line 38: 1082599 Segmentation fault      LD_LIBRARY_PATH="$(pwd):$LD_LIBRARY_PATH" ./sledgert ../tests/fib.json
+throughput 32925.460000 rss 107642515281504 total_local_requests 1646273 empty 44997238159474 824186 fib 62645277122030 822087
+throughput 32426.520000 rss 105904636900510 total_local_requests 1621326 empty 44321121066600 812681 fib 61583515833910 808645
+creation rate 68831.460000 total 3441573 added 3249743 lost 191830
+throughput 32496.240000 rss 106127916033642 total_local_requests 1624812 empty 44428421502904 814664 fib 61699494530738 810148
+throughput 32306.640000 rss 105539150380062 total_local_requests 1615332 empty 44117328008744 808805 fib 61421822371318 806527
+creation rate 69054.620000 total 3452731 added 3262098 lost 190633
+C: 01, T: 0x7fd636c19000, F: panic_on_epoll_error> 
+	epoll_error: Most likely client disconnected. Closing session.
+C: 01, T: 0x7fd636c19000, F: http_session_log_malformed_request> 
+	socket: 9. Address: 176.65.193.54
+
+C: 01, T: 0x7fd636c19000, F: on_client_request_receiving> 
+	Failed to receive or parse request
+
+./start.sh: line 39: 1025916 Killed                  LD_LIBRARY_PATH="$(pwd):$LD_LIBRARY_PATH" ./sledgert ../tests/fib.json

@@ -13,7 +13,7 @@ cd $project_path/runtime/bin
 export SLEDGE_SCHEDULER=FIFO
 #export SLEDGE_DISABLE_PREEMPTION=true
 #export SLEDGE_SANDBOX_PERF_LOG=$path/srsf.log
-export SLEDGE_NWORKERS=24
+export SLEDGE_NWORKERS=6
 export LD_LIBRARY_PATH="$(pwd):$LD_LIBRARY_PATH"
 #gdb --eval-command="handle SIGUSR1 nostop" \
 #       --eval-command="set pagination off" \

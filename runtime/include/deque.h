@@ -21,7 +21,7 @@
  */
 
 /* TODO: Implement the ability to dynamically resize! Issue #89 */
-#define DEQUE_MAX_SZ (1 << 23)
+#define DEQUE_MAX_SZ (1 << 30)
 
 #define DEQUE_PROTOTYPE(name, type)                                                                 \
 	struct deque_##name {                                                                       \
@@ -54,14 +54,12 @@
                                                                                                     \
 		ct = q->top;                                                                        \
 		cb = q->bottom;                                                                     \
-                                                                                                    \
 		/* nope, fixed size only */                                                         \
 		if (q->size - 1 < (cb - ct)) return -ENOSPC;                                        \
                                                                                                     \
 		q->wrk[cb] = *w;                                                                    \
-		__sync_synchronize();                                                               \
+		__sync_synchronize();	\
 		if (__sync_bool_compare_and_swap(&q->bottom, cb, cb + 1) == false) assert(0);       \
-                                                                                                    \
 		return 0;                                                                           \
 	}                                                                                           \
                                                                                                     \

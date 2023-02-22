@@ -1,0 +1,89 @@
+/usr/local/home/sledge-serverless-framework
+Starting the Sledge runtime
+System Flags:
+	Architecture                  x86_64
+	Page Size                     4096
+Static Compiler Flags (Features):
+	Admissions Control            [1;31mDisabled[0m
+Static Compiler Flags (Debugging):
+	Assertions and Debug Logs     [0;32mEnabled[0m
+	Logging to                    STDOUT and STDERR
+	Log Admissions Control        [1;31mDisabled[0m
+	Log Context Switches          [1;31mDisabled[0m
+	Log HTTP Parser               [1;31mDisabled[0m
+	Log Tenant Loading            [1;31mDisabled[0m
+	Log Preemption                [1;31mDisabled[0m
+	Log Request Allocation        [1;31mDisabled[0m
+	Log Software Interrupt Counts [1;31mDisabled[0m
+	Log State Changes             [1;31mDisabled[0m
+	HTTP Total Counters           [1;31mDisabled[0m
+	HTTP Route Total Counters     [1;31mDisabled[0m
+	procfs Metrics                [1;31mDisabled[0m
+	Log Sandbox State Count       [0;32mEnabled[0m
+	Log Local Runqueue            [1;31mDisabled[0m
+Runtime Environment:
+	Processor Speed               1500 MHz
+	RLIMIT_DATA                   Infinite
+	RLIMIT_NOFILE                 1000000
+	Core Count (Online)           32
+	Listener core ID              1
+	First Worker core ID          4
+	Worker core count             12
+	Scheduler Policy              FIFO
+	Sigalrm Policy                BROADCAST
+	Preemption                    [0;32mEnabled[0m
+	Quantum                       5000 us
+	Sandbox Performance Log       [1;31mDisabled[0m
+	HTTP Session Performance Log  [1;31mDisabled[0m
+Starting listener thread
+	Listener core thread: 7fe0b16da000
+Starting 12 worker thread(s)
+worker 0 on cpu 4
+worker 1 on cpu 5
+worker 2 on cpu 6
+worker 3 on cpu 7
+worker 4 on cpu 8
+worker 5 on cpu 9
+worker 6 on cpu 10
+worker 7 on cpu 11
+worker 8 on cpu 12
+worker 9 on cpu 13
+worker 10 on cpu 14
+worker 11 on cpu 15
+idx 0 rate 10000 input 25
+session 0: 25 fibonacci.wasm.so
+generator coucou 0 starts
+idx 1 rate 10000 input 15
+session 0: 25 empty.wasm.so
+session 1: 15 empty.wasm.so
+generator coucou 1 starts
+killing Session 0
+killing Session 1
+killing Worker 0
+killing Worker 1
+killing Worker 2
+killing Worker 3
+killing Worker 4
+killing Worker 5
+killing Worker 6
+killing Worker 7
+killing Worker 8
+killing Worker 9
+killing Worker 10
+killing Worker 11
+killing Listener
+throughput 20268.920000 rss 458429242622 total_local_requests 1013446 empty 228544214126 513303 fib 229885028496 500143
+throughput 21000.520000 rss 475533668022 total_local_requests 1050026 empty 236062738036 522122 fib 239470929986 527904
+throughput 20730.800000 rss 470630826772 total_local_requests 1036540 empty 234843062998 525439 fib 235787763774 511101
+throughput 20660.140000 rss 468646092328 total_local_requests 1033007 empty 233720274992 523198 fib 234925817336 509809
+throughput 20821.760000 rss 473195376386 total_local_requests 1041088 empty 235310056110 521571 fib 237885320276 519517
+throughput 20788.640000 rss 469199540710 total_local_requests 1039432 empty 233382714036 516090 fib 235816826674 523342
+throughput 20408.680000 rss 461089967138 total_local_requests 1020434 empty 229944038322 519167 fib 231145928816 501267
+throughput 20859.600000 rss 471835109672 total_local_requests 1042980 empty 234463031814 516931 fib 237372077858 526049
+throughput 20836.140000 rss 471199643648 total_local_requests 1041807 empty 234572807608 517793 fib 236626836040 524014
+creation rate 123856.080000 total 6192804 added 6192804 lost 0
+throughput 20747.320000 rss 470167402048 total_local_requests 1037366 empty 234793471976 526627 fib 235373930072 510739
+throughput 20860.140000 rss 471965073550 total_local_requests 1043007 empty 234798469334 516886 fib 237166604216 526121
+creation rate 124849.160000 total 6242458 added 6242458 lost 0
+throughput 20719.140000 rss 470102996148 total_local_requests 1035957 empty 234322246554 523240 fib 235780749594 512717
+./start.sh: line 39: 1061339 Segmentation fault      LD_LIBRARY_PATH="$(pwd):$LD_LIBRARY_PATH" ./sledgert ../tests/fib.json

@@ -1,0 +1,77 @@
+/usr/local/home/sledge-serverless-framework
+Starting the Sledge runtime
+System Flags:
+	Architecture                  x86_64
+	Page Size                     4096
+Static Compiler Flags (Features):
+	Admissions Control            [1;31mDisabled[0m
+Static Compiler Flags (Debugging):
+	Assertions and Debug Logs     [0;32mEnabled[0m
+	Logging to                    STDOUT and STDERR
+	Log Admissions Control        [1;31mDisabled[0m
+	Log Context Switches          [1;31mDisabled[0m
+	Log HTTP Parser               [1;31mDisabled[0m
+	Log Tenant Loading            [1;31mDisabled[0m
+	Log Preemption                [1;31mDisabled[0m
+	Log Request Allocation        [1;31mDisabled[0m
+	Log Software Interrupt Counts [1;31mDisabled[0m
+	Log State Changes             [1;31mDisabled[0m
+	HTTP Total Counters           [1;31mDisabled[0m
+	HTTP Route Total Counters     [1;31mDisabled[0m
+	procfs Metrics                [1;31mDisabled[0m
+	Log Sandbox State Count       [0;32mEnabled[0m
+	Log Local Runqueue            [1;31mDisabled[0m
+Runtime Environment:
+	Processor Speed               1500 MHz
+	RLIMIT_DATA                   Infinite
+	RLIMIT_NOFILE                 1000000
+	Core Count (Online)           32
+	Listener core ID              1
+	First Worker core ID          4
+	Worker core count             8
+	Scheduler Policy              FIFO
+	Sigalrm Policy                BROADCAST
+	Preemption                    [0;32mEnabled[0m
+	Quantum                       5000 us
+	Sandbox Performance Log       [1;31mDisabled[0m
+	HTTP Session Performance Log  [1;31mDisabled[0m
+Starting listener thread
+	Listener core thread: 7fca9abb1000
+Starting 8 worker thread(s)
+worker 0 on cpu 4
+worker 1 on cpu 5
+worker 2 on cpu 6
+worker 3 on cpu 7
+worker 4 on cpu 8
+worker 5 on cpu 9
+worker 6 on cpu 10
+worker 7 on cpu 11
+idx 0 rate 100000 input 25
+session 0: 25 fibonacci.wasm.so
+generator coucou 0 starts
+idx 1 rate 100000 input 15
+session 0: 25 empty.wasm.so
+session 1: 15 empty.wasm.so
+generator coucou 1 starts
+killing Session 0
+killing Session 1
+killing Worker 0
+killing Worker 1
+killing Worker 2
+killing Worker 3
+killing Worker 4
+killing Worker 5
+killing Worker 6
+killing Worker 7
+killing Listener
+creation rate 18816.860000 total 940843 added 940843 lost 0
+throughput 4656.040000 rss 6696323264 total_local_requests 232802 empty 2853849438 107665 fib 3842473826 125137
+throughput 4667.220000 rss 6729024454 total_local_requests 233361 empty 2880118358 108100 fib 3848906096 125261
+creation rate 18739.040000 total 936952 added 936951 lost 0
+throughput 4717.500000 rss 6701053960 total_local_requests 235875 empty 3545008086 127449 fib 3156045874 108426
+throughput 4650.340000 rss 6612453586 total_local_requests 232517 empty 2876887396 109103 fib 3735566190 123414
+throughput 4765.000000 rss 6760367236 total_local_requests 238250 empty 3569476888 128744 fib 3190890348 109506
+throughput 4784.520000 rss 6812022272 total_local_requests 239226 empty 3623743720 130045 fib 3188278552 109181
+throughput 4676.820000 rss 6700846452 total_local_requests 233841 empty 2823064714 108044 fib 3877781738 125797
+throughput 4638.440000 rss 6612930808 total_local_requests 231922 empty 3376660974 121693 fib 3236269834 110229
+./start.sh: line 39: 1081297 Killed                  LD_LIBRARY_PATH="$(pwd):$LD_LIBRARY_PATH" ./sledgert ../tests/fib.json

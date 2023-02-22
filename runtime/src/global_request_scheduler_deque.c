@@ -2,7 +2,7 @@
 #include "global_request_scheduler_deque.h"
 #include "runtime.h"
 
-#define GLOBAL_REQUEST_SCHEDULER_DEQUE_CAPACITY (1 << 19)
+#define GLOBAL_REQUEST_SCHEDULER_DEQUE_CAPACITY 4096 //(1 << 19)
 
 static struct deque_sandbox *global_request_scheduler_deque;
 
@@ -50,7 +50,7 @@ global_request_scheduler_deque_remove(struct sandbox **removed_sandbox)
 	
 	//lock_lock(&global_lock, &node);
 	pthread_mutex_lock(&global_request_scheduler_deque_mutex);	
-	int ret = deque_pop_sandbox(global_request_scheduler_deque, removed_sandbox);
+	int ret = deque_steal_sandbox(global_request_scheduler_deque, removed_sandbox);
 	pthread_mutex_unlock(&global_request_scheduler_deque_mutex);	
 	//lock_unlock(&global_lock, &node);
 	return ret; 
