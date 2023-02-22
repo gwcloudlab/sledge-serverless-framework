@@ -29,6 +29,7 @@
 #include "tenant_functions.h"
 #include "worker_thread.h"
 
+bool first_request_comming = false;
 /* Conditionally used by debuglog when NDEBUG is not set */
 int32_t  debuglog_file_descriptor        = -1;
 uint32_t runtime_first_worker_processor  = 1;

@@ -18,6 +18,7 @@
 #include "tenant_functions.h"
 #include "priority_queue.h"
 
+thread_local bool pthread_stop = false;
 /***************************
  * Worker Thread State     *
  **************************/
@@ -64,6 +65,7 @@ worker_thread_main(void *argument)
 
 	software_interrupt_unmask_signal(SIGFPE);
 	software_interrupt_unmask_signal(SIGSEGV);
+	software_interrupt_unmask_signal(SIGINT);
 
 	/* Unmask signals, unless the runtime has disabled preemption */
 	if (runtime_preemption_enabled) {
