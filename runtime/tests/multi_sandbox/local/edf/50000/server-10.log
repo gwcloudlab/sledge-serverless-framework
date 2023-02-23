@@ -1,0 +1,82 @@
+/usr/local/home/sledge-serverless-framework
+Starting the Sledge runtime
+System Flags:
+	Architecture                  x86_64
+	Page Size                     4096
+Static Compiler Flags (Features):
+	Admissions Control            [1;31mDisabled[0m
+Static Compiler Flags (Debugging):
+	Assertions and Debug Logs     [0;32mEnabled[0m
+	Logging to                    STDOUT and STDERR
+	Log Admissions Control        [1;31mDisabled[0m
+	Log Context Switches          [1;31mDisabled[0m
+	Log HTTP Parser               [1;31mDisabled[0m
+	Log Tenant Loading            [1;31mDisabled[0m
+	Log Preemption                [1;31mDisabled[0m
+	Log Request Allocation        [1;31mDisabled[0m
+	Log Software Interrupt Counts [1;31mDisabled[0m
+	Log State Changes             [1;31mDisabled[0m
+	HTTP Total Counters           [1;31mDisabled[0m
+	HTTP Route Total Counters     [1;31mDisabled[0m
+	procfs Metrics                [1;31mDisabled[0m
+	Log Sandbox State Count       [0;32mEnabled[0m
+	Log Local Runqueue            [1;31mDisabled[0m
+Runtime Environment:
+	Processor Speed               1500 MHz
+	RLIMIT_DATA                   Infinite
+	RLIMIT_NOFILE                 1000000
+	Core Count (Online)           32
+	Listener core ID              1
+	First Worker core ID          4
+	Worker core count             10
+	Scheduler Policy              EDF
+	Sigalrm Policy                BROADCAST
+	Preemption                    [0;32mEnabled[0m
+	Quantum                       5000 us
+	Sandbox Performance Log       [1;31mDisabled[0m
+	HTTP Session Performance Log  [1;31mDisabled[0m
+Starting listener thread
+	Listener core thread: 7f18eee61000
+Starting 10 worker thread(s)
+worker 0 on cpu 4
+worker 1 on cpu 5
+worker 2 on cpu 6
+worker 3 on cpu 7
+worker 4 on cpu 8
+worker 5 on cpu 9
+worker 6 on cpu 10
+worker 7 on cpu 11
+worker 8 on cpu 12
+worker 9 on cpu 13
+idx 0 rate 50000 input 25
+session 0: 25 fibonacci.wasm.so
+generator coucou 0 starts
+idx 1 rate 50000 input 15
+session 0: 25 empty.wasm.so
+session 1: 15 empty.wasm.so
+generator coucou 1 starts
+killing Session 0
+killing Session 1
+killing Worker 0
+killing Worker 1
+killing Worker 2
+killing Worker 3
+killing Worker 4
+killing Worker 5
+killing Worker 6
+killing Worker 7
+killing Worker 8
+killing Worker 9
+killing Listener
+throughput 7781.766667 rss 11198124608 total_local_requests 466906 empty 5355002486 233117 fib 5843122122 233789
+throughput 7781.750000 rss 10965296642 total_local_requests 466905 empty 5086747714 233117 fib 5878548928 233788
+throughput 7781.766667 rss 11123089024 total_local_requests 466906 empty 5145081548 233117 fib 5978007476 233789
+throughput 7781.766667 rss 11248214314 total_local_requests 466906 empty 5383151172 233117 fib 5865063142 233789
+throughput 7781.750000 rss 11111305854 total_local_requests 466905 empty 5347787882 233117 fib 5763517972 233788
+throughput 7781.733333 rss 10291744030 total_local_requests 466904 empty 4738386960 233116 fib 5553357070 233788
+creation rate 38964.750000 total 2337885 added 2337885 lost 0
+throughput 7781.750000 rss 10990307896 total_local_requests 466905 empty 5107739630 233117 fib 5882568266 233788
+throughput 7781.733333 rss 10495097526 total_local_requests 466904 empty 5103466804 233116 fib 5391630722 233788
+creation rate 38852.800000 total 2331168 added 2331168 lost 0
+throughput 7781.766667 rss 11236987484 total_local_requests 466906 empty 5393733640 233117 fib 5843253844 233789
+throughput 7781.766667 rss 11073371578 total_local_requests 466906 empty 5134733916 233117 fib 5938637662 233789

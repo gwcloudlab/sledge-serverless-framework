@@ -136,7 +136,7 @@ static inline struct sandbox *
 scheduler_edf_get_next()
 {
 	struct sandbox *local          = local_runqueue_get_next();
-	uint64_t        local_deadline = local == NULL ? UINT64_MAX : local->absolute_deadline;
+	/*uint64_t        local_deadline = local == NULL ? UINT64_MAX : local->absolute_deadline;
 	struct sandbox *global         = NULL;
 	uint64_t global_deadline = global_request_scheduler_peek();
 	if (global_deadline < local_deadline) {
@@ -148,8 +148,13 @@ scheduler_edf_get_next()
 			sandbox_set_as_runnable(global, SANDBOX_INITIALIZED);
 		}
 	}
-	
-	return local_runqueue_get_next();
+*/
+	if (local && local->state == SANDBOX_INITIALIZED) {
+		sandbox_prepare_execution_environment(local);
+		sandbox_set_as_runnable(local,SANDBOX_INITIALIZED);
+	}
+
+	return local;
 }
 
 

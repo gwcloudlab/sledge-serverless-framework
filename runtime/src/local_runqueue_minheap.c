@@ -27,7 +27,6 @@ thread_local static struct priority_queue *local_runqueue_minheap;
 bool
 local_runqueue_minheap_is_empty()
 {
-	//return priority_queue_length_nolock(local_runqueue_minheap) == 0;
 	return priority_queue_length(local_runqueue_minheap) == 0;
 }
 
@@ -58,29 +57,25 @@ local_runqueue_minheap_add(struct sandbox *sandbox)
 		}
 	}
 }
-
-extern thread_local bool added;
+extern thread_local uint64_t sandbox_added, sandbox_lost;
 void
 local_runqueue_minheap_add_index(int index, struct sandbox *sandbox)
 {
 
-	if (worker_queues[index]->size >= worker_queues[index]->capacity) return;
-
 	int return_code = priority_queue_enqueue(worker_queues[index], sandbox);
 	if (return_code != 0) {
 		if (return_code == -ENOSPC) {
- /*                     panic("Thread Runqueue is full!\n");
-			req_miss++;
 			sandbox->state = SANDBOX_COMPLETE;
 	       		sandbox->http = NULL;
 			sandbox_free(sandbox);
-		*/
+			sandbox_lost++;
 			return;
 		} else {
                         printf("add request to local queue failed, exit\n");
                         exit(0);
                 }
         }
+	sandbox_added++;
 }
 
 /**

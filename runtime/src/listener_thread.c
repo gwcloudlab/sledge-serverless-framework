@@ -256,7 +256,7 @@ generator_main(int idx)
 	local_session = NULL; //http_session_alloc(g_session[idx]->socket, (const struct sockaddr *)&(g_session[idx]->client_address),
   //                                                    g_session[idx]->tenant, g_session[idx]->request_arrival_timestamp);
 	software_interrupt_unmask_signal(SIGINT);
-	int i = 10000000;
+	int rr_index = 0;
 	while (true) {
 		if (change[idx]) {
 			if (local_session != NULL)
@@ -268,6 +268,7 @@ generator_main(int idx)
 		}
 		struct sandbox *sandbox = sandbox_alloc(local_session->route->module, local_session, local_session->route, local_session->tenant, 1);
 		nb_sandbox++;
+		/*
 		if (sandbox && global_request_scheduler_add(sandbox) == NULL) {
 			sandbox_lost++;
 			sandbox->http = NULL;
@@ -275,14 +276,15 @@ generator_main(int idx)
                         sandbox_free(sandbox);
 		}else { 
 			sandbox_added++;
-		}
+		}*/
+		local_runqueue_minheap_add_index(rr_index, sandbox);
 		int cycles = ran_expo(1.0/rate[idx]); 
 		begin = __getcycles();
         	end = begin;
         	while(end - begin < cycles) {
                 	end = __getcycles();
 		}
-		i--;
+		rr_index = (rr_index + 1) % runtime_worker_threads_count;
 	}
 
 }
