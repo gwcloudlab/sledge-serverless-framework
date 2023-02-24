@@ -1,0 +1,94 @@
+/usr/local/home/sledge-serverless-framework
+Starting the Sledge runtime
+System Flags:
+	Architecture                  x86_64
+	Page Size                     4096
+Static Compiler Flags (Features):
+	Admissions Control            [1;31mDisabled[0m
+Static Compiler Flags (Debugging):
+	Assertions and Debug Logs     [0;32mEnabled[0m
+	Logging to                    STDOUT and STDERR
+	Log Admissions Control        [1;31mDisabled[0m
+	Log Context Switches          [1;31mDisabled[0m
+	Log HTTP Parser               [1;31mDisabled[0m
+	Log Tenant Loading            [1;31mDisabled[0m
+	Log Preemption                [1;31mDisabled[0m
+	Log Request Allocation        [1;31mDisabled[0m
+	Log Software Interrupt Counts [1;31mDisabled[0m
+	Log State Changes             [1;31mDisabled[0m
+	HTTP Total Counters           [1;31mDisabled[0m
+	HTTP Route Total Counters     [1;31mDisabled[0m
+	procfs Metrics                [1;31mDisabled[0m
+	Log Sandbox State Count       [0;32mEnabled[0m
+	Log Local Runqueue            [1;31mDisabled[0m
+Runtime Environment:
+	Processor Speed               1500 MHz
+	RLIMIT_DATA                   Infinite
+	RLIMIT_NOFILE                 1000000
+	Core Count (Online)           32
+	Listener core ID              1
+	First Worker core ID          4
+	Worker core count             14
+	Scheduler Policy              EDF
+	Sigalrm Policy                BROADCAST
+	Preemption                    [0;32mEnabled[0m
+	Quantum                       5000 us
+	Sandbox Performance Log       [1;31mDisabled[0m
+	HTTP Session Performance Log  [1;31mDisabled[0m
+Starting listener thread
+	Listener core thread: 7f75ad6f4000
+Starting 14 worker thread(s)
+worker 0 on cpu 4
+worker 1 on cpu 5
+worker 2 on cpu 6
+worker 3 on cpu 7
+worker 4 on cpu 8
+worker 5 on cpu 9
+worker 6 on cpu 10
+worker 7 on cpu 11
+worker 8 on cpu 12
+worker 9 on cpu 13
+worker 10 on cpu 14
+worker 11 on cpu 15
+worker 12 on cpu 16
+worker 13 on cpu 17
+idx 0 rate 50000 input 25
+session 0: 25 fibonacci.wasm.so
+generator coucou 0 starts
+idx 1 rate 50000 input 15
+session 0: 25 empty.wasm.so
+session 1: 15 empty.wasm.so
+generator coucou 1 starts
+killing Session 0
+killing Session 1
+killing Worker 0
+killing Worker 1
+killing Worker 2
+killing Worker 3
+killing Worker 4
+killing Worker 5
+killing Worker 6
+killing Worker 7
+killing Worker 8
+killing Worker 9
+killing Worker 10
+killing Worker 11
+killing Worker 12
+throughput 5531.766667 rss 8573100256 total_local_requests 331906 empty 3935599836 166167 fib 4637500420 165739
+throughput 5531.766667 rss 7981387918 total_local_requests 331906 empty 3803711140 166167 fib 4177676778 165739
+throughput 5531.766667 rss 8622908462 total_local_requests 331906 empty 4109527878 166167 fib 4513380584 165739
+throughput 5531.766667 rss 8571206290 total_local_requests 331906 empty 3939730398 166167 fib 4631475892 165739
+killing Worker 13
+throughput 5531.766667 rss 7994846632 total_local_requests 331906 empty 3814878336 166167 fib 4179968296 165739
+throughput 5531.766667 rss 8036828646 total_local_requests 331906 empty 3674046574 166167 fib 4362782072 165739
+throughput 5531.766667 rss 8592861078 total_local_requests 331906 empty 3953829610 166167 fib 4639031468 165739
+throughput 5531.766667 rss 8692729798 total_local_requests 331906 empty 4137894296 166167 fib 4554835502 165739
+throughput 5531.766667 rss 8588439618 total_local_requests 331906 empty 4088656214 166167 fib 4499783404 165739
+killing Listener
+throughput 5531.750000 rss 8008971254 total_local_requests 331905 empty 3670940770 166167 fib 4338030484 165738
+throughput 5531.766667 rss 8008469018 total_local_requests 331906 empty 3636634308 166167 fib 4371834710 165739
+creation rate 38672.416667 total 2320345 added 2320345 lost 0
+throughput 5531.766667 rss 8667185898 total_local_requests 331906 empty 4128016260 166167 fib 4539169638 165739
+creation rate 38772.316667 total 2326339 added 2326339 lost 0
+throughput 5531.766667 rss 8148756080 total_local_requests 331906 empty 3897775694 166167 fib 4250980386 165739
+throughput 5531.766667 rss 8517111496 total_local_requests 331906 empty 3922672344 166167 fib 4594439152 165739

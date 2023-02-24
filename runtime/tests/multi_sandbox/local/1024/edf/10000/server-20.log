@@ -1,0 +1,113 @@
+/usr/local/home/sledge-serverless-framework
+Starting the Sledge runtime
+System Flags:
+	Architecture                  x86_64
+	Page Size                     4096
+Static Compiler Flags (Features):
+	Admissions Control            [1;31mDisabled[0m
+Static Compiler Flags (Debugging):
+	Assertions and Debug Logs     [0;32mEnabled[0m
+	Logging to                    STDOUT and STDERR
+	Log Admissions Control        [1;31mDisabled[0m
+	Log Context Switches          [1;31mDisabled[0m
+	Log HTTP Parser               [1;31mDisabled[0m
+	Log Tenant Loading            [1;31mDisabled[0m
+	Log Preemption                [1;31mDisabled[0m
+	Log Request Allocation        [1;31mDisabled[0m
+	Log Software Interrupt Counts [1;31mDisabled[0m
+	Log State Changes             [1;31mDisabled[0m
+	HTTP Total Counters           [1;31mDisabled[0m
+	HTTP Route Total Counters     [1;31mDisabled[0m
+	procfs Metrics                [1;31mDisabled[0m
+	Log Sandbox State Count       [0;32mEnabled[0m
+	Log Local Runqueue            [1;31mDisabled[0m
+Runtime Environment:
+	Processor Speed               1500 MHz
+	RLIMIT_DATA                   Infinite
+	RLIMIT_NOFILE                 1000000
+	Core Count (Online)           32
+	Listener core ID              1
+	First Worker core ID          4
+	Worker core count             20
+	Scheduler Policy              EDF
+	Sigalrm Policy                BROADCAST
+	Preemption                    [0;32mEnabled[0m
+	Quantum                       5000 us
+	Sandbox Performance Log       [1;31mDisabled[0m
+	HTTP Session Performance Log  [1;31mDisabled[0m
+Starting listener thread
+	Listener core thread: 7fdfc9091000
+Starting 20 worker thread(s)
+worker 0 on cpu 4
+worker 1 on cpu 5
+worker 2 on cpu 6
+worker 3 on cpu 7
+worker 4 on cpu 8
+worker 5 on cpu 9
+worker 6 on cpu 10
+worker 7 on cpu 11
+worker 8 on cpu 12
+worker 9 on cpu 13
+worker 10 on cpu 14
+worker 11 on cpu 15
+worker 12 on cpu 16
+worker 13 on cpu 17
+worker 14 on cpu 18
+worker 15 on cpu 19
+worker 16 on cpu 20
+worker 17 on cpu 21
+worker 18 on cpu 22
+worker 19 on cpu 23
+idx 0 rate 10000 input 25
+session 0: 25 fibonacci.wasm.so
+generator coucou 0 starts
+idx 1 rate 10000 input 15
+session 0: 25 empty.wasm.so
+session 1: 15 empty.wasm.so
+generator coucou 1 starts
+killing Session 0
+killing Session 1
+killing Worker 0
+killing Worker 1
+killing Worker 2
+killing Worker 3
+killing Worker 4
+killing Worker 5
+killing Worker 6
+killing Worker 7
+creation rate 137168.283333 total 8230097 added 8230097 lost 0
+throughput 13406.000000 rss 2580847234218 total_local_requests 804360 empty 176020595846 392900 fib 2404826638372 411460
+throughput 13406.750000 rss 2165804705332 total_local_requests 804405 empty 147401366810 392900 fib 2018403338522 411505
+throughput 13406.550000 rss 2415439869096 total_local_requests 804393 empty 150722965310 392900 fib 2264716903786 411493
+creation rate 130966.800000 total 7858008 added 7858008 lost 0
+throughput 13406.233333 rss 3121363542800 total_local_requests 804374 empty 185709272222 392899 fib 2935654270578 411475
+throughput 13406.733333 rss 2339990068424 total_local_requests 804404 empty 162978902564 392900 fib 2177011165860 411504
+throughput 13406.750000 rss 3004022116048 total_local_requests 804405 empty 186699561276 392900 fib 2817322554772 411505
+killing Worker 8
+throughput 13406.766667 rss 2403920379942 total_local_requests 804406 empty 164092056910 392901 fib 2239828323032 411505
+throughput 13406.283333 rss 2442273234714 total_local_requests 804377 empty 152706029300 392900 fib 2289567205414 411477
+killing Worker 9
+killing Worker 10
+throughput 13406.116667 rss 2313986706902 total_local_requests 804367 empty 143184291266 392900 fib 2170802415636 411467
+throughput 13406.116667 rss 2207304949478 total_local_requests 804367 empty 157340341912 392900 fib 2049964607566 411467
+killing Worker 11
+killing Worker 12
+killing Worker 13
+throughput 13406.750000 rss 1890722927064 total_local_requests 804405 empty 132144814206 392900 fib 1758578112858 411505
+throughput 13406.750000 rss 3183191130344 total_local_requests 804405 empty 216677254930 392900 fib 2966513875414 411505
+killing Worker 14
+throughput 13405.800000 rss 2851115745774 total_local_requests 804348 empty 186129175226 392900 fib 2664986570548 411448
+throughput 13406.083333 rss 3684172955226 total_local_requests 804365 empty 250528835550 392900 fib 3433644119676 411465
+killing Worker 15
+killing Worker 16
+killing Worker 17
+killing Worker 18
+throughput 13406.150000 rss 2364577003344 total_local_requests 804369 empty 153256906922 392900 fib 2211320096422 411469
+throughput 13406.733333 rss 3036018843150 total_local_requests 804404 empty 195690870350 392900 fib 2840327972800 411504
+throughput 13406.583333 rss 2352782513000 total_local_requests 804395 empty 145321850982 392900 fib 2207460662018 411495
+throughput 13405.666667 rss 2596076540816 total_local_requests 804340 empty 171801349398 392900 fib 2424275191418 411440
+killing Worker 19
+killing Listener
+throughput 13405.166667 rss 3507999577762 total_local_requests 804310 empty 233672165732 392887 fib 3274327412030 411423
+throughput 13406.483333 rss 2388106121982 total_local_requests 804389 empty 153457427206 392900 fib 2234648694776 411489
+./start.sh: line 39: 50221 Segmentation fault      LD_LIBRARY_PATH="$(pwd):$LD_LIBRARY_PATH" ./sledgert ../tests/fib.json

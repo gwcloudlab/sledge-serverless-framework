@@ -1,0 +1,77 @@
+/usr/local/home/sledge-serverless-framework
+Starting the Sledge runtime
+System Flags:
+	Architecture                  x86_64
+	Page Size                     4096
+Static Compiler Flags (Features):
+	Admissions Control            [1;31mDisabled[0m
+Static Compiler Flags (Debugging):
+	Assertions and Debug Logs     [0;32mEnabled[0m
+	Logging to                    STDOUT and STDERR
+	Log Admissions Control        [1;31mDisabled[0m
+	Log Context Switches          [1;31mDisabled[0m
+	Log HTTP Parser               [1;31mDisabled[0m
+	Log Tenant Loading            [1;31mDisabled[0m
+	Log Preemption                [1;31mDisabled[0m
+	Log Request Allocation        [1;31mDisabled[0m
+	Log Software Interrupt Counts [1;31mDisabled[0m
+	Log State Changes             [1;31mDisabled[0m
+	HTTP Total Counters           [1;31mDisabled[0m
+	HTTP Route Total Counters     [1;31mDisabled[0m
+	procfs Metrics                [1;31mDisabled[0m
+	Log Sandbox State Count       [0;32mEnabled[0m
+	Log Local Runqueue            [1;31mDisabled[0m
+Runtime Environment:
+	Processor Speed               1500 MHz
+	RLIMIT_DATA                   Infinite
+	RLIMIT_NOFILE                 1000000
+	Core Count (Online)           32
+	Listener core ID              1
+	First Worker core ID          4
+	Worker core count             8
+	Scheduler Policy              EDF
+	Sigalrm Policy                BROADCAST
+	Preemption                    [0;32mEnabled[0m
+	Quantum                       5000 us
+	Sandbox Performance Log       [1;31mDisabled[0m
+	HTTP Session Performance Log  [1;31mDisabled[0m
+Starting listener thread
+	Listener core thread: 7fa9bb3dc000
+Starting 8 worker thread(s)
+worker 0 on cpu 4
+worker 1 on cpu 5
+worker 2 on cpu 6
+worker 3 on cpu 7
+worker 4 on cpu 8
+worker 5 on cpu 9
+worker 6 on cpu 10
+worker 7 on cpu 11
+idx 0 rate 35000 input 25
+session 0: 25 fibonacci.wasm.so
+generator coucou 0 starts
+idx 1 rate 35000 input 15
+session 0: 25 empty.wasm.so
+session 1: 15 empty.wasm.so
+generator coucou 1 starts
+killing Session 0
+killing Session 1
+killing Worker 0
+killing Worker 1
+killing Worker 2
+killing Worker 3
+killing Worker 4
+killing Worker 5
+killing Worker 6
+killing Worker 7
+killing Listener
+throughput 13511.033333 rss 21005972840 total_local_requests 810662 empty 9542392630 405953 fib 11463580210 404709
+creation rate 53961.166667 total 3237670 added 3237670 lost 0
+creation rate 54127.016667 total 3247621 added 3247621 lost 0
+throughput 13511.016667 rss 21101419390 total_local_requests 810661 empty 9552892186 405952 fib 11548527204 404709
+throughput 13511.000000 rss 20725458636 total_local_requests 810660 empty 9400625836 405952 fib 11324832800 404708
+throughput 13511.033333 rss 20881238840 total_local_requests 810662 empty 9490430130 405953 fib 11390808710 404709
+throughput 13511.016667 rss 21073182666 total_local_requests 810661 empty 9903943480 405952 fib 11169239186 404709
+throughput 13511.000000 rss 20771405660 total_local_requests 810660 empty 9773707304 405952 fib 10997698356 404708
+throughput 13511.033333 rss 20831145342 total_local_requests 810662 empty 9775411256 405953 fib 11055734086 404709
+throughput 13511.033333 rss 21068802478 total_local_requests 810662 empty 10000725064 405953 fib 11068077414 404709
+./start.sh: line 39: 57858 Segmentation fault      LD_LIBRARY_PATH="$(pwd):$LD_LIBRARY_PATH" ./sledgert ../tests/fib.json

@@ -23,7 +23,7 @@ path=`pwd`
 #export SLEDGE_DISABLE_PREEMPTION=true
 #export SLEDGE_SIGALRM_HANDLER=TRIAGED
 export SLEDGE_NWORKERS=$core_num
-export SLEDGE_SCHEDULER=EDF
+export SLEDGE_SCHEDULER=FIFO
 #export SLEDGE_SANDBOX_PERF_LOG=$path/$output
 #echo $SLEDGE_SANDBOX_PERF_LOG
 cd $project_path/runtime/bin

@@ -277,7 +277,7 @@ generator_main(int idx)
 		}else { 
 			sandbox_added++;
 		}*/
-		local_runqueue_minheap_add_index(rr_index, sandbox);
+		local_runqueue_list_add_index(rr_index, sandbox);
 		int cycles = ran_expo(1.0/rate[idx]); 
 		begin = __getcycles();
         	end = begin;
