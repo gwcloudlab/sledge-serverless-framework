@@ -268,7 +268,7 @@ generator_main(int idx)
 		}
 		struct sandbox *sandbox = sandbox_alloc(local_session->route->module, local_session, local_session->route, local_session->tenant, 1);
 		nb_sandbox++;
-		/*
+		
 		if (sandbox && global_request_scheduler_add(sandbox) == NULL) {
 			sandbox_lost++;
 			sandbox->http = NULL;
@@ -276,8 +276,7 @@ generator_main(int idx)
                         sandbox_free(sandbox);
 		}else { 
 			sandbox_added++;
-		}*/
-		local_runqueue_list_add_index(rr_index, sandbox);
+		}
 		int cycles = ran_expo(1.0/rate[idx]); 
 		begin = __getcycles();
         	end = begin;

@@ -29,7 +29,7 @@ do
 		./kill_sledge.sh
 		grep throughput $server_log | wc -l 
 	done
-	mkdir "multi_sandbox/local/1024/fifo/"${rate[r]}
-	mv server-* "multi_sandbox/local/1024/fifo/"${rate[r]}
+#	mkdir "multi_sandbox/local/1024/fifo/"${rate[r]}
+#	mv server-* "multi_sandbox/local/1024/fifo/"${rate[r]}
 done	
 

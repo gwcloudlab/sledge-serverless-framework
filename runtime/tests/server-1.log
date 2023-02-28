@@ -29,14 +29,14 @@ Runtime Environment:
 	Listener core ID              1
 	First Worker core ID          4
 	Worker core count             1
-	Scheduler Policy              FIFO
+	Scheduler Policy              EDF
 	Sigalrm Policy                BROADCAST
 	Preemption                    [0;32mEnabled[0m
 	Quantum                       5000 us
 	Sandbox Performance Log       [1;31mDisabled[0m
 	HTTP Session Performance Log  [1;31mDisabled[0m
 Starting listener thread
-	Listener core thread: 7f0cf19a4000
+	Listener core thread: 7fb2c6fa4000
 Starting 1 worker thread(s)
 worker 0 on cpu 4
 idx 0 rate 10000 input 25
@@ -50,6 +50,7 @@ killing Session 0
 killing Session 1
 killing Worker 0
 killing Listener
-throughput 18448.066667 rss 151878242092766 total_local_requests 1106884 empty 75351487913634 548682 fib 76526754179132 558202
-creation rate 184055.666667 total 11043340 added 560213 lost 10483127
-creation rate 183182.033333 total 10990922 added 550548 lost 10440374
+throughput 34366.285714 rss 184545263201444 total_local_requests 721692 empty 86322942167480 352875 fib 98222321033964 368817
+creation rate 185119.761905 total 3887515 added 371012 lost 3516503
+creation rate 181751.285714 total 3816777 added 354776 lost 3462001
+./start.sh: line 39: 158031 Segmentation fault      LD_LIBRARY_PATH="$(pwd):$LD_LIBRARY_PATH" ./sledgert ../tests/fib.json
