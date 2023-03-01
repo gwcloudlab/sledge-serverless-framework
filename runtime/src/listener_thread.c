@@ -25,8 +25,11 @@ thread_local uint64_t nb_sandbox = 0;
 thread_local uint64_t sandbox_added = 0;
 thread_local uint64_t sandbox_lost = 0;
 struct priority_queue* worker_queues[1024];
+
+/* We have one http session per generator thread */
 struct http_session *g_session[1024];
 thread_local http_session *local_session = NULL;
+
 bool change[1024];
 int rate[1024];
 int input[1024];
@@ -238,11 +241,13 @@ on_client_request_receiving(struct http_session *session)
 	assert(0);
 }
 
+
+/** SLEDGE GENERATOR **/
+/* Randon function follwing Poisson distribution */ 
 double ran_expo(double lambda){
     double u;
 
     u = rand() / (RAND_MAX + 1.0);
-
     return -log(1- u) / lambda;
 }
 	
@@ -253,11 +258,10 @@ generator_main(int idx)
 	is_generator = true;
         printf("generator coucou %d starts\n", idx);
         pthread_setschedprio(pthread_self(), -20);
-	local_session = NULL; //http_session_alloc(g_session[idx]->socket, (const struct sockaddr *)&(g_session[idx]->client_address),
-  //                                                    g_session[idx]->tenant, g_session[idx]->request_arrival_timestamp);
+	local_session = NULL; 
 	software_interrupt_unmask_signal(SIGINT);
-	int rr_index = 0;
 	while (true) {
+		/*If the setting has been modified, update it*/
 		if (change[idx]) {
 			if (local_session != NULL)
 				http_session_free(local_session);
@@ -277,13 +281,14 @@ generator_main(int idx)
 		}else { 
 			sandbox_added++;
 		}
+		
+		
 		int cycles = ran_expo(1.0/rate[idx]); 
 		begin = __getcycles();
         	end = begin;
         	while(end - begin < cycles) {
                 	end = __getcycles();
 		}
-		rr_index = (rr_index + 1) % runtime_worker_threads_count;
 	}
 
 }
@@ -327,7 +332,7 @@ on_client_request_received(struct http_session *session)
 
 	bool new_thread = false;
 
-	/* Request Pqrsing */
+	/* Request Parsing */
 	char *req_body = strdup(session->http_request.body);
         int idx_gen = nb_generator;
 	int tmp = atoi(strtok(req_body, " "));
@@ -377,9 +382,12 @@ on_client_request_received(struct http_session *session)
                	pthread_create(&generator[idx_gen], NULL, generator_main, idx_gen);
                	int pin_ret = pthread_setaffinity_np(generator[idx_gen], sizeof(cs[idx_gen]), &cs[idx_gen]);
 	}
+
+	/* For experiments we wait the 2nd generator to start couting */
 	if (nb_generator == 2)
 		t_start = time(NULL);
 }
+/** SLEDGE GENERATOR **/
 
 static void
 on_client_response_header_sending(struct http_session *session)
