@@ -18,7 +18,9 @@ make test
 ### SLEdge Sandbox Generator
 
 We provide a multithread configurable sandbox generator which simulate a workload.
+
 A sandbox generator is defined by a setting: a unique setting id, a function type, the arguments and the latency between two sandboxes creation.
+
 To configure one setting, run:
 
 ```bash
