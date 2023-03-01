@@ -15,6 +15,30 @@ make install
 make test
 ```
 
+### SLEdge Sandbox Generator
+
+We provide a multithread configurable sandbox generator which simulate a workload.
+A sandbox generator is defined by a setting: a unique setting id, a function type, the arguments and the latency between two sandboxes creation.
+To configure one setting, run:
+
+```bash
+curl -H 'Expect:' -H "Content-Type: application/json" --data-binary "id cycles input" "http://ip_address:port/route"
+```
+
+For example:
+
+```bash
+curl -H 'Expect:' -H "Content-Type: application/json" --data-binary "0 10000 15" "http://localhost:10030/fib"
+```
+In this example, we set the 0-th generator thread to create fibonacci(15) sandboxes every 10000 cycles. 
+
+It is also possible to change the scheduler from EDF to FIFO:
+
+```bash
+export SLEDGE_SCHEDULER=FIFO
+```
+
+
 ### Docker
 
 **Note: These steps require Docker. Make sure you've got it installed!**
