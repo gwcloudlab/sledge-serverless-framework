@@ -39,7 +39,7 @@ It is also possible to change the scheduler from EDF to FIFO:
 ```bash
 export SLEDGE_SCHEDULER=FIFO
 ```
-
+For any questions or help, please let us know by e-mail: yveskone@outlook.com
 
 ### Docker
 
