@@ -67,6 +67,8 @@ struct sandbox {
 	uint64_t admissions_estimate; /* estimated execution time (cycles) * runtime_admissions_granularity / relative
 	                                 deadline (cycles) */
 	uint64_t total_time;          /* Total time from Request to Response */
+        uint64_t max_running_cycles;  /* Maximum time to run in cycles */
+	int need_terminate;
 
 	void *rpc_handler;
 	uint8_t rpc_id;

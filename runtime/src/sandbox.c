@@ -185,6 +185,7 @@ sandbox_init(struct sandbox *sandbox, struct module *module, struct http_session
 
 	sandbox->absolute_deadline = sandbox->timestamp_of.allocation + sandbox->route->relative_deadline;
 	sandbox->relative_deadline = sandbox->route->relative_deadline;
+	sandbox->max_running_cycles = sandbox->relative_deadline << RUNTIME_MAX_RUNNING_TIME_COEFFICIENT;
 	sandbox->global_worker_thread_idx = -1;
 	sandbox->group_worker_thread_idx = -1;
 

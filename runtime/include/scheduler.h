@@ -138,7 +138,6 @@ scheduler_edf_get_next()
 			local->timestamp_of.last_state_change =  now;
 			/* end by xiaosu */
 			sandbox_prepare_execution_environment(local);
-                        //printf("sandbox state %d\n", local->state);
 			assert(local->state == SANDBOX_INITIALIZED);
 			sandbox_set_as_runnable(local, SANDBOX_INITIALIZED);
 		}
@@ -360,6 +359,7 @@ scheduler_preemptive_sched(ucontext_t *interrupted_context)
 		struct sandbox *next = scheduler_get_next();
 		assert(next != NULL);
                	scheduler_preemptive_switch_to(interrupted_context, next);
+	        return;
 	    } else {
 	    	/* current sandbox shouldn't be interrupted becuase it is the only request in the local queue 
 	       	   so return directly, the current context isn't switched and will resume when single handler
@@ -368,7 +368,6 @@ scheduler_preemptive_sched(ucontext_t *interrupted_context)
                 sandbox_interrupt_return(interrupted_sandbox, SANDBOX_RUNNING_USER);
                 return;
 	    }
-	    return;
         }
 
 	struct sandbox *next = scheduler_get_next();
@@ -377,7 +376,7 @@ scheduler_preemptive_sched(ucontext_t *interrupted_context)
 	assert(next != NULL);
 
 	/* If current equals next, no switch is necessary, or its RS <= 0, just resume execution */
-	if (interrupted_sandbox == next || interrupted_sandbox->srsf_remaining_slack <= 0) {
+	if (interrupted_sandbox->need_terminate != 1 && (interrupted_sandbox == next || interrupted_sandbox->srsf_remaining_slack <= 0)) {
 		sandbox_interrupt_return(interrupted_sandbox, SANDBOX_RUNNING_USER);
 		return;
 	}

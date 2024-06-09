@@ -503,13 +503,19 @@ void edf_interrupt_req_handler(void *req_handle, uint8_t req_type, uint8_t *msg,
 
     total_requests++;
     /* Allocate a Sandbox */
-    //session->state          = HTTP_SESSION_EXECUTING;
     struct sandbox *sandbox = sandbox_alloc(route->module, NULL, route, tenant, work_admitted, req_handle, dispatcher_thread_idx);
     if (unlikely(sandbox == NULL)) {
         debuglog("Failed to allocate sandbox\n");
 		dispatcher_send_response(req_handle, SANDBOX_ALLOCATION_ERROR, strlen(SANDBOX_ALLOCATION_ERROR));
         return;
     }
+
+    /*int num = atoi((const char *)msg);
+    if (num == 1) {
+      printf("receive infinit loop req\n");
+    } else if (num == 2) {
+      printf("receive trap 2 req\n");
+    }*/
 
     /* Reset estimated execution time and relative deadline for exponential service time simulation */
     if (runtime_exponential_service_time_simulation_enabled) {
@@ -521,6 +527,7 @@ void edf_interrupt_req_handler(void *req_handle, uint8_t req_type, uint8_t *msg,
 	}
 	sandbox->relative_deadline = 10 * sandbox->estimated_cost;
 	sandbox->absolute_deadline = sandbox->timestamp_of.allocation + sandbox->relative_deadline;
+        sandbox->max_running_cycles = sandbox->relative_deadline << RUNTIME_MAX_RUNNING_TIME_COEFFICIENT;
     }
 
     /* copy the received data since it will be released by erpc */
@@ -537,28 +544,37 @@ void edf_interrupt_req_handler(void *req_handle, uint8_t req_type, uint8_t *msg,
     int candidate_thread_with_interrupt = -1; /* This thread can server the request immediately by interrupting 
 					         the current one */
 
+    // first check if the current sandbox is running timeout and terminate them if there have
+    for(int i = 0; i < current_active_workers; i++) {
+	int g_id = worker_list[i];
+	if (current_sandboxes[g_id] != NULL && __getcycles() - current_sandboxes[g_id]->timestamp_of.last_state_change +
+                                                      current_sandboxes[g_id]->duration_of_state[SANDBOX_RUNNING_SYS] +
+                                                      current_sandboxes[g_id]->duration_of_state[SANDBOX_RUNNING_USER] >=
+                                                      current_sandboxes[g_id]->max_running_cycles) {
+                //printf("send interrupt to worker %d to terminate sandbox\n", g_id);
+		current_sandboxes[g_id]->need_terminate = 1;
+		preempt_worker(g_id);
+		dispatcher_try_interrupts++;
+	}	
+    }
+
     next_loop_start_index++;
     if (next_loop_start_index == current_active_workers) {
         next_loop_start_index = 0;
     }
 
-    //uint64_t waiting_times[3] = {0};
     int violate_deadline_workers = 0;
     for (uint32_t i = next_loop_start_index; i < next_loop_start_index + current_active_workers; ++i) {
 	int true_idx = i % current_active_workers;
 	bool need_interrupt;
         uint64_t waiting_serving_time = local_runqueue_try_add_index(worker_list[true_idx], sandbox, &need_interrupt);
-	/*waiting_times[true_idx] = waiting_serving_time;
-	if (waiting_times[true_idx] != 0) {
-		mem_log("listener %d %d queue:\n", dispatcher_thread_idx, worker_list[true_idx]);
-		local_runqueue_print_in_order(worker_list[true_idx]);	
-	}*/
 	/* The local queue is empty, the worker is idle, can be served this request immediately 
          * without interrupting 
          */
         if (waiting_serving_time == 0 && need_interrupt == false) {
             local_runqueue_add_index(worker_list[true_idx], sandbox);
 	    //mem_log("listener %d %d is idle, choose it\n", dispatcher_thread_idx, worker_list[true_idx]);  
+	    //printf("worker %d is idle, choose it num %d\n", worker_list[true_idx], num);  
             return;
         } else if (waiting_serving_time == 0 && need_interrupt == true) {//The worker can serve the request immediately
 									// by interrupting the current one
@@ -600,11 +616,15 @@ void edf_interrupt_req_handler(void *req_handle, uint8_t req_type, uint8_t *msg,
         local_runqueue_add_index(candidate_thread_with_interrupt, sandbox);
 	//mem_log("listener %d %d can be interrupted immediately for req deadline %lu\n", dispatcher_thread_idx, 
 	//	candidate_thread_with_interrupt, sandbox->absolute_deadline);
+	//printf("worker %d can be interrupted immediately for req deadline %lu num %d\n",
+	//	candidate_thread_with_interrupt, sandbox->absolute_deadline, num);
 	
         preempt_worker(candidate_thread_with_interrupt);
 	dispatcher_try_interrupts++;
     } else {
         local_runqueue_add_index(thread_id, sandbox);
+	//printf("worker %d has the min waiting time for req deadline %lu. 0:%lu 1:%lu, num %d\n", 
+	//	 thread_id, sandbox->absolute_deadline, waiting_times[0], waiting_times[1], num);
 	/*mem_log("listener %d %d has the min waiting time for req deadline %lu. 0:%lu 1:%lu 2:%lu\n", 
 		 dispatcher_thread_idx, thread_id, sandbox->absolute_deadline, waiting_times[0], waiting_times[1], waiting_times[2]);
 	local_runqueue_print_in_order(thread_id);

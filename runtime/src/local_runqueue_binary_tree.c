@@ -24,7 +24,6 @@ extern struct sandbox* current_sandboxes[1024];
 extern struct binary_tree *worker_binary_trees[1024];
 thread_local static struct binary_tree *local_runqueue_binary_tree = NULL;
 
-
 /**
  * Checks if the run queue is empty
  * @returns true if empty. false otherwise
@@ -107,6 +106,7 @@ local_runqueue_binary_tree_add_index(int index, struct sandbox *sandbox)
 		} 
         	sandbox->estimated_cost = estimated_execute_cost;
 		sandbox->relative_deadline = sandbox->route->relative_deadline;
+		sandbox->max_running_cycles = sandbox->relative_deadline << RUNTIME_MAX_RUNNING_TIME_COEFFICIENT;
 	}
 	/* Record TS and calcuate RS. SRSF algo:
            1. When reqeust arrives to the queue, record TS and calcuate RS. RS = deadline - execution time
@@ -172,10 +172,10 @@ local_runqueue_binary_tree_try_add_index(int index, struct sandbox *sandbox, boo
 {
 	struct binary_tree *binary_tree = worker_binary_trees[index];
 	assert(binary_tree != NULL);
+	*need_interrupt = false;
 
 	if (is_empty(binary_tree)) {
 		/* The worker is idle */
-		*need_interrupt = false;
 		return 0;
 	} else if (current_sandboxes[index] != NULL &&
 		   current_sandboxes[index]->srsf_remaining_slack > 0 && 
@@ -188,12 +188,12 @@ local_runqueue_binary_tree_try_add_index(int index, struct sandbox *sandbox, boo
 		/* Current sandbox cannot be interrupted because its priority is higher or its RS is 0, just find
                    a right location to add the new sandbox to the tree 
 		*/
-		need_interrupt = false;
 		uint64_t waiting_serving_time = 0;
 		lock_node_t node_lock = {};
     		lock_lock(&binary_tree->lock, &node_lock);
 		waiting_serving_time = findMaxValueLessThan(binary_tree, binary_tree->root, sandbox, index);
 		lock_unlock(&binary_tree->lock, &node_lock);
+                //printf("worker %d waiting time is %lu\n", index, waiting_serving_time);
 		return waiting_serving_time; 
 	}
 

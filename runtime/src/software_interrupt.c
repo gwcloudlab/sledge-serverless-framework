@@ -60,6 +60,8 @@ extern pthread_t *runtime_listener_threads;
 extern _Atomic uint32_t sandbox_state_totals[SANDBOX_STATE_COUNT];
 #endif
 
+extern void current_sandbox_exit();
+
 /**************************
  * Private Static Inlines *
  *************************/
@@ -187,6 +189,11 @@ software_interrupt_handle_signals(int signal_type, siginfo_t *signal_info, void 
 				/* Global tenant promotions */
 				global_timeout_queue_process_promotions();
 			}
+		} else if (current_sandbox && current_sandbox->need_terminate == 1) {
+			/* Terminate the current sandbox and due to it exceeds maximum running time */
+			//printf("terminate a sandbox\n");		
+			sandbox_syscall(current_sandbox);
+			current_sandbox_exit();
 		} else if (current_sandbox_is_preemptable()) {
 			preemptable_interrupts++;
 			/* Preemptable, so run scheduler. The scheduler handles outgoing state changes */
@@ -285,9 +292,12 @@ software_interrupt_handle_signals(int signal_type, siginfo_t *signal_info, void 
                         local_runqueue_count[global_worker_thread_idx],
 			local_runqueue_get_length(), total_complete_requests);
 		pthread_stop = true;		
-		/* Wake up worker so it can check if pthread_stop is true, othewise, it will block at condition wait */
-		wakeup_worker(global_worker_thread_idx);
-		sem_post(&semlock[global_worker_thread_idx]);	
+                if (!runtime_worker_busy_loop_enabled) {
+		    /* Wake up worker so it can check if pthread_stop is true, othewise, it will block at condition wait */
+		    wakeup_worker(global_worker_thread_idx);
+		    sem_post(&semlock[global_worker_thread_idx]);	
+		}
+                pthread_exit(NULL);
 		break;
 	}
 	default: {

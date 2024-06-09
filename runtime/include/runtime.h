@@ -44,6 +44,8 @@ extern struct memory_pool *memory_pools;
 #define RUNTIME_RUNQUEUE_SIZE            2560000        /* Minimum guaranteed size. Might grow! */
 #define RUNTIME_TENANT_QUEUE_SIZE        4096
 
+#define RUNTIME_MAX_RUNNING_TIME_COEFFICIENT 4; // this means multipling 2^4=16 of deadline
+
 enum RUNTIME_SIGALRM_HANDLER
 {
 	RUNTIME_SIGALRM_HANDLER_BROADCAST = 0,
