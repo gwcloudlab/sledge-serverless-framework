@@ -9,6 +9,7 @@
 #include "admissions_info.h"
 #include "current_wasm_module_instance.h"
 #include "panic.h"
+#include "pool.h"
 #include "sledge_abi_symbols.h"
 #include "tcp_server.h"
 #include "types.h"
@@ -16,9 +17,17 @@
 #include "wasm_stack.h"
 #include "wasm_memory.h"
 #include "wasm_table.h"
-#include "runtime.h"
 
 extern thread_local int global_worker_thread_idx;
+
+INIT_POOL(wasm_memory, wasm_memory_free)
+INIT_POOL(wasm_stack, wasm_stack_free)
+
+struct module_pool {
+       struct wasm_memory_pool memory;
+       struct wasm_stack_pool  stack;
+} CACHE_PAD_ALIGNED;
+
 
 struct module {
 	char    *path;
@@ -29,6 +38,7 @@ struct module {
 
 	_Atomic uint32_t               reference_count; /* ref count how many instances exist here. */
 	struct sledge_abi__wasm_table *indirect_table;
+	struct module_pool *pools;
 
 } CACHE_PAD_ALIGNED;
 
@@ -141,7 +151,7 @@ module_allocate_stack(struct module *module)
 {
 	assert(module != NULL);
 
-	struct wasm_stack *stack = runtime_stack_pool_remove(global_worker_thread_idx);
+	struct wasm_stack *stack = wasm_stack_pool_remove_nolock(&module->pools[global_worker_thread_idx].stack);
 
 	if (stack == NULL) {
 		stack = wasm_stack_alloc(module->stack_size);
@@ -157,7 +167,7 @@ module_free_stack(struct module *module, struct wasm_stack *stack)
 	uint64_t now = __getcycles();	
 	wasm_stack_reinit(stack);
 	uint64_t d = __getcycles() - now;
-	runtime_stack_pool_add(global_worker_thread_idx, stack);
+	wasm_stack_pool_add_nolock(&module->pools[global_worker_thread_idx].stack, stack);
 	return d;
 }
 
@@ -175,7 +185,7 @@ module_allocate_linear_memory(struct module *module)
 	assert(starting_bytes <= (uint64_t)UINT32_MAX + 1);
 	assert(max_bytes <= (uint64_t)UINT32_MAX + 1);
 
-	struct wasm_memory *linear_memory = runtime_linear_memory_pool_remove(global_worker_thread_idx);
+	struct wasm_memory *linear_memory = wasm_memory_pool_remove_nolock(&module->pools[global_worker_thread_idx].memory);
 	if (linear_memory == NULL) {
 		linear_memory = wasm_memory_alloc(starting_bytes, max_bytes);
 		if (unlikely(linear_memory == NULL)) return NULL;
@@ -188,7 +198,7 @@ static inline void
 module_free_linear_memory(struct module *module, struct wasm_memory *memory)
 {
 	wasm_memory_reinit(memory, module->abi.starting_pages * WASM_PAGE_SIZE);
-	runtime_linear_memory_pool_add(global_worker_thread_idx, memory);
+ 	wasm_memory_pool_add_nolock(&module->pools[global_worker_thread_idx].memory, memory);	
 }
 
 static inline void
@@ -206,3 +216,22 @@ module_preallocate_memory(struct module *module) {
 	module_free_stack(module, stack1);
 	module_free_stack(module, stack2);
 }
+
+static inline void
+module_initialize_pools(struct module *module)
+{
+       for (int i = 0; i < runtime_worker_threads_count; i++) {
+               wasm_memory_pool_init(&module->pools[i].memory, false);
+               wasm_stack_pool_init(&module->pools[i].stack, false);
+       }
+}
+
+static inline void
+module_deinitialize_pools(struct module *module)
+{
+       for (int i = 0; i < runtime_worker_threads_count; i++) {
+               wasm_memory_pool_deinit(&module->pools[i].memory);
+               wasm_stack_pool_deinit(&module->pools[i].stack);
+       }
+}
+

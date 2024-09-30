@@ -40,8 +40,6 @@ int       *runtime_listener_threads_argument;
 uint64_t *runtime_worker_threads_deadline;
 uint64_t wakeup_thread_cycles;
 
-struct memory_pool *memory_pools = NULL;
-
 /******************************************
  * Shared Process / Listener Thread Logic *
  *****************************************/
@@ -64,8 +62,6 @@ runtime_cleanup()
 	}
 
 	software_interrupt_cleanup();
-	runtime_deinitialize_pools();
-	free(memory_pools);
 	exit(EXIT_SUCCESS);
 }
 
@@ -132,9 +128,6 @@ runtime_initialize(void)
 	request_index_initialize();
 	sandbox_state_totals_initialize();
 	worker_queuing_cost_initialize();
-
-        memory_pools = calloc(runtime_worker_threads_count, sizeof(struct memory_pool));
-        runtime_initialize_pools();
 
 	/* Setup Scheduler */
 	scheduler_initialize();
